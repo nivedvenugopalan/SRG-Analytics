@@ -1,1 +1,1 @@
-# DiscordAnalyticsBot
+# DiscordAnalytics
