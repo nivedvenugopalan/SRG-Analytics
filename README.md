@@ -1,4 +1,4 @@
-# DiscordAnalytics
+# SRG Analytics
 A discord bot that stalks you, without stalking you.
 ### What the bot gets from discord:
 1. DiscordID
