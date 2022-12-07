@@ -128,4 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-data/
+# PyCharm cache files
+.idea/
+
+
