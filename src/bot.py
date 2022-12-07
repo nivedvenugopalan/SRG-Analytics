@@ -2,24 +2,21 @@ import os
 import discord
 from discord.ext import commands
 
-from dotenv import load_dotenv
-load_dotenv()
+# token stuff
+import dotenv
+dotenv.load_dotenv()
+token = str(os.getenv("TOKEN"))
 
-intents = discord.Intents.default()
-intents.message_content = True
+intents = discord.Intents.all()
+client = commands.Bot(intents=intents)
 
-bot = commands.Bot(command_prefix="•", intents=intents)
+# cogs
+client.load_extension('cogs.processMessages')
 
 
-@bot.event
+@client.event
 async def on_ready():
-    print(discord.__version__)
-    print("Connected to Discord!")
+    print(f"The bot is online.")
 
 
-@bot.command()
-async def test(ctx):
-    print("Works")
-    await ctx.reply("Works!")
-
-bot.run(os.getenv('TOKEN'))
+client.run(token)
