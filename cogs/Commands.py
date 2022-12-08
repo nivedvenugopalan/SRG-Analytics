@@ -1,3 +1,6 @@
+import asyncio
+import time
+
 import discord.ext.commands
 from discord.ext import commands
 from backend import DataManager
@@ -24,6 +27,29 @@ class Commands(commands.Cog):
 
         guild = ctx.guild
         data_list = {}
+        start_time = time.time()
+        count = 0
+
+        async def harvest_channel(channel, count):
+            # Iterate through all messages in the channel
+            async for message in channel.history(limit=None):
+                data_list[channel.name].append([
+                    message.id, message.content, message.author.id, message.created_at,
+                    message.reference.message_id if message.reference else None,
+                    str([mention.id for mention in message.mentions]) if message.mentions != [] else None
+                ])
+                count += 1
+                print(count)
+
+        def middle(channel, count):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            loop.run_until_complete(harvest_channel(channel, count))
+            loop.close()
+
+
+        thread_list = []
 
         # Iterate through all channels in the guild
         for channel in guild.channels:
@@ -35,21 +61,23 @@ class Commands(commands.Cog):
             # Iterate through all messages in the channel
             data_list[channel.name] = []
             channel = self.client.get_channel(channel.id)
+            log.info(f"Harvesting channel {channel.name}...")
 
-            # Iterate through all messages in the channel
-            async for message in channel.history(limit=None):
+            import threading
 
-                data_list[channel.name].append([
-                    message.id, message.content, message.author.id, message.created_at,
-                    message.reference.message_id if message.reference else None,
-                    str([mention.id for mention in ctx.mentions]) if ctx.mentions != [] else None
-                ])
+            thread = threading.Thread(target=middle, args=(channel, count))
+            thread_list.append(thread)
+            thread.start()
+
+        for thread in thread_list:
+            thread.join()
 
         # Add the data to the database
         for channel in data_list:
             self.manager.add_bulk_data(guild.id, data_list[channel])
 
         await ctx.followup.send("Harvested data from the guild.")
+        log.info(f"Harvested data from guild {guild.id} in {time.time() - start_time} seconds.")
 
     @commands.slash_command(name="get_all_messages")
     async def get_all_messages(self, ctx):

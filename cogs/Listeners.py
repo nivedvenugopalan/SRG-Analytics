@@ -23,8 +23,6 @@ class Listeners(commands.Cog):
         if ctx.author.bot:
             return
 
-        print(ctx.id)
-
         self.manager.add_data(ctx.guild.id, ctx.id, ctx.content, ctx.author.id,
                               ctx.reference.message_id if ctx.reference else None,
                               [mention.id for mention in ctx.mentions] if ctx.mentions != [] else None)
