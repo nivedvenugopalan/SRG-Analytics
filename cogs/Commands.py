@@ -53,7 +53,7 @@ class Commands(commands.Cog):
 
     @commands.slash_command(name="get_all_messages")
     async def get_all_messages(self, ctx):
-        self.manager.get_all_messages(ctx.guild.id, ctx.author.id)
+        self.manager.get_all_user_messages(ctx.guild.id, ctx.author.id)
 
 
 # The `setup` function is required for the cog to work

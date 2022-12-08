@@ -132,5 +132,6 @@ class DataManager:
     def get_all_user_messages(self, guild_id: int, user_id: int):
         self.cur.execute("SELECT * FROM ? WHERE AUTHORID=?", (guild_id, user_id))
         data = self.cur.fetchall()
+        print(data)
         return data
 
