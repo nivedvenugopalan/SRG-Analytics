@@ -19,8 +19,9 @@ class Commands(commands.Cog):
     # I recommend using only slash-commands for your bot.
     @commands.slash_command(name="harvest", description="Harvests data from a guild.")
     async def harvest(self, ctx):
-        guild = ctx.guild
+        await ctx.defer()
 
+        guild = ctx.guild
         data_list = {}
 
         # Iterate through all channels in the guild
@@ -29,13 +30,22 @@ class Commands(commands.Cog):
             data_list[channel.name] = []
 
             async for message in channel.history(limit=None):
-                data_list[channel.name].append([message.id, message.content, message.author.id,
-                                               message.created_at, message.reference.message_id if message.reference else None])
+
+                mentions = []
+                for mention in message.mentions:
+                    mentions.append(mention.id)
+
+                data_list[channel.name].append([
+                    message.id, message.content, message.author.id, message.created_at,
+                    message.reference.message_id if message.reference else None, mentions
+                    if mentions != [] else None
+                ])
 
         # Add the data to the database
         for channel in data_list:
             self.manager.add_bulk_data(guild.id, data_list[channel])
 
+        await ctx.followup.send("Harvested data from the guild.")
     @commands.slash_command(name="get_all_messages")
     async def get_all_messages(self, ctx):
         self.manager.get_all_messages(ctx.guild.id, ctx.author.id)
