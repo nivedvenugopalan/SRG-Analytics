@@ -27,6 +27,7 @@ import discord.utils
 # This is what gets run when the bot stars
 @client.event
 async def on_ready():
+    print("Connected to Discord!")
     log.info(f"Bot is ready. Logged in as {client.user}")
     await client.change_presence(activity=discord.Game(name=presence))
 

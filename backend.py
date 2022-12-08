@@ -99,41 +99,38 @@ class DataManager:
             log.critical(f"Failed to connect to database. {e}")
 
     def add_guild(self, guild_id: int) -> None:
+
         self.cur.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (guild_id,))
-        if self.cur.fetchone() is None:
-            self.cur.execute(
-                """
-                CREATE TABLE ?
-                (ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                MSGID INT   NOT NULL,
-                MESSAGE TEXT    NOT NULL,
-                AUTHORID INT    NOT NULL,
-                EPOCH INT    NOT NULL,
-                CTXID INT.
-                MENTIONS TEXT);
-                """, (guild_id,)
-            )
-
-            log.info(f"Created table for guild {guild_id}")
-
+            f"""
+            CREATE TABLE IF NOT EXISTS '{str(guild_id)}'
+            (ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            MSGID INT   NOT NULL,
+            MESSAGE TEXT    NOT NULL,
+            AUTHORID INT    NOT NULL,
+            EPOCH INT    NOT NULL,
+            CTXID INT,
+            MENTIONS TEXT);
+            """
+        )
         self.con.commit()
+
+        log.info(f"Created table for guild {guild_id}")
 
     def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, ctx_id: int = None, mentions: list = None):
 
-        self.con.execute("INSERT INTO ? (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID, MENTIONS) VALUES (?, ?, ?, ?, ?);",
-                         (guild_id, msg_id, msg, author_id, int(time.time()) * 1000, ctx_id, mentions))
+        self.con.execute(f"INSERT INTO '{str(guild_id)}' (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID, MENTIONS) VALUES (?, ?, ?, ?, ?, ?);",
+                         (msg_id, msg, author_id, int(time.time()) * 1000, ctx_id, str(mentions)))
 
         self.con.commit()
 
     def add_bulk_data(self, guild_id: int, data: list):
-        self.con.executemany(f"INSERT INTO {guild_id} (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID, MENTIONS) VALUES (?, ?, ?, ?, ?);",
+        self.con.executemany(f"INSERT INTO '{str(guild_id)}' (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID, MENTIONS) VALUES (?, ?, ?, ?, ?, ?);",
                              data)
 
         self.con.commit()
 
-    def get_all_messages(self, guild_id: int, user_id: int):
-        data = self.con.execute("""SELECT * FROM ?
-        WHERE AUTHORID=?""", (guild_id, user_id))
-        data1 = self.con.commit()
-        print(data, data1)
+    def get_all_user_messages(self, guild_id: int, user_id: int):
+        self.cur.execute("SELECT * FROM ? WHERE AUTHORID=?", (guild_id, user_id))
+        data = self.cur.fetchall()
+        return data
+
