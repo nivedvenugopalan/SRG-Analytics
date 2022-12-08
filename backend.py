@@ -107,7 +107,8 @@ class DataManager:
                 MESSAGE TEXT    NOT NULL,
                 AUTHORID INT    NOT NULL,
                 EPOCH INT    NOT NULL,
-                CTXID INT);
+                CTXID INT.
+                MENTIONS TEXT);
                 """, (guild_id,)
             )
 
@@ -115,15 +116,15 @@ class DataManager:
 
         self.con.commit()
 
-    def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, ctx_id: int = None):
+    def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, ctx_id: int = None, mentions: list = None):
 
-        self.con.execute("INSERT ? MAIN (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID) "
-                         "VALUES (?, ?, ?, ?, ?);", (guild_id, msg_id, msg, author_id, int(time.time()) * 1000, ctx_id))
+        self.con.execute("INSERT INTO ? (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID, MENTIONS) VALUES (?, ?, ?, ?, ?);",
+                         (guild_id, msg_id, msg, author_id, int(time.time()) * 1000, ctx_id, mentions))
 
         self.con.commit()
 
     def add_bulk_data(self, guild_id: int, data: list):
-        self.con.executemany(f"INSERT INTO {guild_id} (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID) VALUES (?, ?, ?, ?, ?);",
+        self.con.executemany(f"INSERT INTO {guild_id} (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID, MENTIONS) VALUES (?, ?, ?, ?, ?);",
                              data)
 
         self.con.commit()
