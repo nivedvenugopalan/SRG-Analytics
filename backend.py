@@ -38,7 +38,8 @@ def colorlogger(name: str = 'my-discord-bot') -> logging.log:
     logger = logging.getLogger(name)
     stream = logging.StreamHandler()
 
-    stream.setFormatter(ColoredFormatter("%(reset)s%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s"))
+    stream.setFormatter(ColoredFormatter(
+        "%(reset)s%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s"))
     logger.addHandler(stream)
     return logger  # Return the logger
 
@@ -70,7 +71,8 @@ try:
 
 
 except Exception as err:
-    log.critical("Error getting variables from the config file. Error: " + str(err))
+    log.critical(
+        "Error getting variables from the config file. Error: " + str(err))
     sys.exit()
 
 # Set the logger's log level to the one in the config file
@@ -78,7 +80,8 @@ if log_level.upper().strip() in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
     log.setLevel(log_level.upper().strip())
 else:
     log.setLevel("INFO")
-    log.warning(f"Invalid log level `{log_level.upper().strip()}`. Defaulting to INFO.")
+    log.warning(
+        f"Invalid log level `{log_level.upper().strip()}`. Defaulting to INFO.")
 
 # Initializing the client
 client = commands.Bot(intents=intents)  # Setting prefix
@@ -97,7 +100,8 @@ class DataManager:
             log.critical(f"Failed to connect to database. {e}")
 
     def add_guild(self, guild_id: int) -> None:
-        self.cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (guild_id,))
+        self.cur.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (guild_id,))
         if self.cur.fetchone() is None:
             self.cur.execute(
                 """
@@ -127,3 +131,9 @@ class DataManager:
                              data)
 
         self.con.commit()
+
+    def get_all_messages(self, guild_id: int, user_id: int):
+        data = self.con.execute("""SELECT * FROM ?
+        WHERE AUTHORID=?""", (guild_id, user_id))
+        data1 = self.con.commit()
+        print(data, data1)

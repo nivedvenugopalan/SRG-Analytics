@@ -1,4 +1,5 @@
 from discord.ext import commands
+from backend import DataManager
 
 # Importing our custom variables/functions from backend.py
 from backend import log
@@ -7,6 +8,7 @@ from backend import log
 class Commands(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.manager = DataManager()
 
     # Use @command.Cog.listener() for an event-listener (on_message, on_ready, etc.)
     @commands.Cog.listener()
@@ -27,16 +29,23 @@ class Commands(commands.Cog):
             data_list[channel.name] = []
 
             async for message in channel.history(limit=None):
-                data_list[channel.name].append([message.id, message.content, message.author.id, message.created_at, message.reference.message_id if message.reference else None])
+                data_list[channel.name].append([message.id, message.content, message.author.id,
+                                               message.created_at, message.reference.message_id if message.reference else None])
 
         # Add the data to the database
         for channel in data_list:
             self.manager.add_bulk_data(guild.id, data_list[channel])
 
+    @commands.slash_command(name="get_all_messages")
+    async def get_all_messages(self, ctx):
+        self.manager.get_all_messages(ctx.guild.id, ctx.author.id)
+
 
 # The `setup` function is required for the cog to work
 # Don't change anything in this function, except for the
 # name of the cog (Example) to the name of your class.
+
+
 def setup(client):
     # Here, `Example` is the name of the class
     client.add_cog(Commands(client))

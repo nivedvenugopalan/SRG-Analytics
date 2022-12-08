@@ -8,3 +8,7 @@ A discord bot that stalks you, without stalking you.
 5. Time
 6. Reply To? (Stored as ID of Message replying to)
 7. Ignore Images, GIFs and other Bots
+
+### Ideas
+- Graphs
+- WordClouds
