@@ -31,14 +31,10 @@ class Commands(commands.Cog):
 
             async for message in channel.history(limit=None):
 
-                mentions = []
-                for mention in message.mentions:
-                    mentions.append(mention.id)
-
                 data_list[channel.name].append([
                     message.id, message.content, message.author.id, message.created_at,
-                    message.reference.message_id if message.reference else None, mentions
-                    if mentions != [] else None
+                    message.reference.message_id if message.reference else None,
+                    [mention.id for mention in ctx.mentions] if ctx.mentions != [] else None
                 ])
 
         # Add the data to the database
@@ -46,6 +42,7 @@ class Commands(commands.Cog):
             self.manager.add_bulk_data(guild.id, data_list[channel])
 
         await ctx.followup.send("Harvested data from the guild.")
+
     @commands.slash_command(name="get_all_messages")
     async def get_all_messages(self, ctx):
         self.manager.get_all_messages(ctx.guild.id, ctx.author.id)
