@@ -1,3 +1,4 @@
+import discord.ext.commands
 from discord.ext import commands
 from backend import DataManager
 
@@ -26,15 +27,22 @@ class Commands(commands.Cog):
 
         # Iterate through all channels in the guild
         for channel in guild.channels:
+
+            # check if channel is a text channel
+            if not isinstance(channel, discord.TextChannel):
+                continue
+
             # Iterate through all messages in the channel
             data_list[channel.name] = []
+            channel = self.client.get_channel(channel.id)
 
+            # Iterate through all messages in the channel
             async for message in channel.history(limit=None):
 
                 data_list[channel.name].append([
                     message.id, message.content, message.author.id, message.created_at,
                     message.reference.message_id if message.reference else None,
-                    [mention.id for mention in ctx.mentions] if ctx.mentions != [] else None
+                    str([mention.id for mention in ctx.mentions]) if ctx.mentions != [] else None
                 ])
 
         # Add the data to the database

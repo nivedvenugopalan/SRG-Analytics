@@ -22,9 +22,7 @@ class Listeners(commands.Cog):
         if ctx.author.bot:
             return
 
-
-
-        self.manager.add_data(ctx.id, ctx.content, ctx.author.id, ctx.created_at,
+        self.manager.add_data(ctx.guild.id, ctx.content, ctx.author.id, ctx.created_at,
                               ctx.reference.message_id if ctx.reference else None,
                               [mention.id for mention in ctx.mentions] if ctx.mentions != [] else None)
         log.debug(f"Added message {ctx.id} to database.")
