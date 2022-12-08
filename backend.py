@@ -21,15 +21,15 @@
 #
 
 import configparser
-import sqlite3
 import sys
 import time
 import discord
 import logging
 from discord.ext import commands
 from colorlog import ColoredFormatter
+import mysql.connector
 
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 
 
 # Initializing the logger
@@ -62,6 +62,11 @@ try:
 
     # Getting the variables from `[secret]`
     discord_token: str = config.get('secret', 'discord_token')
+    db_host: str = config.get('secret', 'database_host')
+    db_user: str = config.get('secret', 'database_username')
+    db_password: str = config.get('secret', 'database_password')
+    db_name: str = config.get('secret', 'database_name')
+    db_port: int = config.getint('secret', 'database_port')
 
     # Getting the variables from `[discord]`
     embed_footer: str = config.get('discord', 'embed_footer')
@@ -86,15 +91,18 @@ else:
 client = commands.Bot(intents=intents)  # Setting prefix
 
 
-# Add your own functions and variables here
-# Happy coding! :D
-
-
 class DataManager:
     def __init__(self) -> None:
         try:
-            self.con = sqlite3.connect(f"./data/data.db")
-            self.cur = self.con.cursor()
+            self.con = mysql.connector.connect(
+                host=db_host,
+                user=db_user,
+                password=db_password,
+                database=db_name,
+                port=db_port
+            )
+            self.cur = self.con.cursor(prepared=True)
+
         except Exception as e:
             log.critical(f"Failed to connect to database. {e}")
 
@@ -102,15 +110,17 @@ class DataManager:
 
         self.cur.execute(
             f"""
-            CREATE TABLE IF NOT EXISTS '{str(guild_id)}'
-            (ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            MSGID INT   NOT NULL,
-            MESSAGE TEXT    NOT NULL,
-            AUTHORID INT    NOT NULL,
-            EPOCH INT    NOT NULL,
-            CTXID INT,
-            MENTIONS TEXT);
-            """
+                CREATE TABLE IF NOT EXISTS %s (
+                id INT NOT NULL AUTO_INCREMENT,
+                msg_id BIGINT NOT NULL,
+                msg_content TEXT,
+                author_id BIGINT NOT NULL,
+                epoch BIGINT NOT NULL,
+                ctx_id BIGINT,
+                mentions TEXT,
+                PRIMARY KEY (id)
+                );
+            """, (str(guild_id),)
         )
         self.con.commit()
 
@@ -118,14 +128,31 @@ class DataManager:
 
     def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, ctx_id: int = None, mentions: list = None):
 
-        self.con.execute(f"INSERT INTO '{str(guild_id)}' (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID, MENTIONS) VALUES (?, ?, ?, ?, ?, ?);",
-                         (msg_id, msg, author_id, int(time.time()) * 1000, ctx_id, str(mentions)))
+        sql = f"INSERT INTO `{guild_id}` (msg_id, msg_content, author_id, epoch"
+        sql += ", ctx_id" if ctx_id else ""
+        sql += ", mentions" if mentions else ""
+        sql += ") VALUES (?, ?, ?, ?"
+        sql += ", ?" if ctx_id else ""
+        sql += ", ?" if mentions else ""
+        sql += ");"
+
+        params = [msg_id, msg, author_id, int(time.time()) * 1000]
+        if ctx_id:
+            params.append(ctx_id)
+        if mentions:
+            params.append(str(mentions))
+
+        self.cur.execute(
+            sql,
+            params
+        )
 
         self.con.commit()
 
     def add_bulk_data(self, guild_id: int, data: list):
-        self.con.executemany(f"INSERT INTO '{str(guild_id)}' (MSGID, MESSAGE, AUTHORID, EPOCH, CTXID, MENTIONS) VALUES (?, ?, ?, ?, ?, ?);",
-                             data)
+        self.cur.executemany(
+            f"INSERT INTO '{str(guild_id)}' (msg_id, msg_content, author_id, epoch, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?);",
+            data)
 
         self.con.commit()
 
@@ -134,4 +161,3 @@ class DataManager:
         data = self.cur.fetchall()
         print(data)
         return data
-

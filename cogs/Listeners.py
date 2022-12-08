@@ -1,3 +1,4 @@
+import discord
 from discord.ext import commands
 from backend import log, DataManager
 
@@ -17,12 +18,14 @@ class Listeners(commands.Cog):
         self.manager.add_guild(guild.id)
 
     @commands.Cog.listener()
-    async def on_message(self, ctx):
+    async def on_message(self, ctx: discord.Message):
         # Ignore bot messages
         if ctx.author.bot:
             return
 
-        self.manager.add_data(ctx.guild.id, ctx.content, ctx.author.id, ctx.created_at,
+        print(ctx.id)
+
+        self.manager.add_data(ctx.guild.id, ctx.id, ctx.content, ctx.author.id,
                               ctx.reference.message_id if ctx.reference else None,
                               [mention.id for mention in ctx.mentions] if ctx.mentions != [] else None)
         log.debug(f"Added message {ctx.id} to database.")
@@ -30,3 +33,4 @@ class Listeners(commands.Cog):
 
 def setup(client):
     client.add_cog(Listeners(client))
+
