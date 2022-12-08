@@ -24,7 +24,6 @@ import configparser
 import sqlite3
 import sys
 import time
-
 import discord
 import logging
 from discord.ext import commands
