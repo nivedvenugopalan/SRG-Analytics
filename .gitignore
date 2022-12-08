@@ -132,5 +132,5 @@ dmypy.json
 .idea/
 
 
-data.db
+data
 config.ini
