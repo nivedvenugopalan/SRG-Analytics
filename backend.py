@@ -151,7 +151,7 @@ class DataManager:
 
     def add_bulk_data(self, guild_id: int, data: list):
         self.cur.executemany(
-            f"INSERT INTO '{str(guild_id)}' (msg_id, msg_content, author_id, epoch, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?);",
+            f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, epoch, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?);",
             data)
 
         self.con.commit()
