@@ -31,10 +31,10 @@ from discord.ext import commands
 from colorlog import ColoredFormatter
 from textblob import TextBlob
 import mysql.connector
+import nltk
 
 intents = discord.Intents.all()
 
-from helpers import *
 
 # Initializing the logger
 def colorlogger(name: str = 'my-discord-bot') -> logging.log:
@@ -94,9 +94,31 @@ else:
 # Initializing the client
 client = commands.Bot(intents=intents)  # Setting prefix
 
+lemmatizer = nltk.stem.WordNetLemmatizer()
+try:
+    stop_words = set(nltk.corpus.stopwords.words('english'))
+except LookupError:
+    nltk.download('stopwords')
+    stop_words = set(nltk.corpus.stopwords.words('english'))
+
+
+def lemmatize(word):
+    lemmatizer.lemmatize(word)
+
+
+def remove_stopwords(sentence):
+    tokens = nltk.tokenize.word_tokenize(sentence)
+    filtered = [w for w in tokens if not w in stop_words]
+    return filtered
+
+
+def remove_non_alpha(sentence):
+    words = [word.lower() for word in sentence.split(" ") if word.isalpha()]
+    return words
+
 
 class DataManager:
-    def __init__(self, verbose:int=0) -> None:
+    def __init__(self, verbose: int = 0) -> None:
         try:
             self.con = mysql.connector.connect(
                 host=db_host,
@@ -156,7 +178,6 @@ class DataManager:
                 sql,
                 params
             )
-            
 
         self.con.commit()
 
@@ -166,19 +187,21 @@ class DataManager:
             data)
 
         self.con.commit()
-    
-    def _get_all_messages(self, guild_id:int, author_id:int, verbose=0):
-        self.cur.execute("SELECT msg_content FROM `{}` WHERE author_id={};".format(str(guild_id), author_id))
+
+    def _get_all_messages(self, guild_id: int, author_id: int):
+        self.cur.execute("SELECT msg_content FROM ? WHERE author_id=?;", (str(guild_id), author_id))
         messages = self.cur.fetchall()
 
         rtn = [str(msg[0].decode()) for msg in messages]
 
-        if verbose != 0:
-            print(rtn[:10])
+        log.debug(rtn[:10])
         return rtn
         
     def _most_used_words(self, guild_id:int, author_id:int, n:int=20, verbose=0, msg_cache=None):
         messages = self._get_all_messages(guild_id, author_id) if msg_cache is None else msg_cache
+
+    def _most_used_words(self, guild_id: int, author_id: int, n: int = 20):
+        messages = self._get_all_messages(guild_id, author_id)
 
         # all words from data
         words = []
@@ -192,7 +215,7 @@ class DataManager:
             # if it is a link
             elif validators.url(sentence):
                 continue
-            
+
             # remove non alpha
             sentence = remove_non_alpha(sentence)
 
@@ -203,75 +226,16 @@ class DataManager:
                 # if it is a mention
                 if sentence[0:2] == "<@":
                     continue
-                
+
                 if word == "":
                     continue
-                
+
                 words.append(word)
 
         # get frequency of each word
         freq = collections.Counter(words)
-        
         rtn = freq.most_common(n)
 
-        # verbose
-        if verbose != 0:
-            print(rtn)
-        
+        log.debug(rtn)
+
         return rtn
-
-    def _net_polarity (self, guild_id:int, author_id:int, verbose=0, msg_cache=None):
-        messages = self._get_all_messages(guild_id, author_id) if msg_cache is None else msg_cache
-        number_of_messages = len(messages)
-        MESSAGE = ".\n".join(messages)
-
-        polarity = round((TextBlob(MESSAGE).sentiment.polarity/number_of_messages)*10000,4)
-
-        if verbose != 0:
-            print(polarity)
-
-        return polarity
-
-    def _total_mentions(self, guild_id:int, author_id:int):
-        self.cur.execute("SELECT mentions FROM `{}` WHERE author_id={};".format(str(guild_id), author_id))
-        messages = self.cur.fetchall()
-
-        return len(messages)
-
-    def _most_mentioned_person(self, guild_id:int, author_id:int):
-        self.cur.execute("SELECT mentions FROM `{}` WHERE author_id={} AND ctx_id IS NULL AND mentions IS NOT NULL;".format(str(guild_id), author_id))
-        messages = self.cur.fetchall()
-
-        mentions = []
-        for mention in messages:
-            if mention[0] is not None:
-                lst = mention[0].strip('][').split(', ')
-                for id_ in lst:
-                    mentions.append(int(id_))
-
-        freq = collections.Counter(mentions)
-        return freq.most_common(1)
-
-    def _total_times_mentioned_and_by_who(self, guild_id:int, author_id:int):
-        self.cur.execute("SELECT author_id FROM `{}` WHERE ctx_id IS NULL AND mentions={};".format(str(guild_id), author_id))
-        ids_ = self.cur.fetchall()
-
-        return len(ids_),collections.Counter(ids_).most_common(1) 
-    
-
-class Profile():
-    def __init__(self, guild_id:int, ID:int, messages:list, top_2_words:list, net_polarity:int, total_mentions:int, most_mentioned_person_id:int, total_times_mentioned:int, most_mentioned_by_id:int) -> None:
-        self.guildID = guild_id # to be removed in the future
-        self.ID = ID
-
-        # NLP
-        self.messages = messages
-        self.number_of_messages = len(messages)
-        self.top_2_words = top_2_words
-        self.net_polarity = net_polarity
-
-        # Mentions
-        self.total_mentions = total_mentions
-        self.most_mentioned_person_id = most_mentioned_person_id
-        self.total_times_mentioned = total_times_mentioned
-        self.most_mentioned_by_id = most_mentioned_by_id
