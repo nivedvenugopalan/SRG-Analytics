@@ -1,4 +1,3 @@
-import asyncio
 import time
 
 import discord.ext.commands
