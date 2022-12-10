@@ -30,10 +30,10 @@ import collections
 from discord.ext import commands
 from colorlog import ColoredFormatter
 import mysql.connector
+import nltk
 
 intents = discord.Intents.all()
 
-from helpers import *
 
 # Initializing the logger
 def colorlogger(name: str = 'my-discord-bot') -> logging.log:
@@ -93,9 +93,31 @@ else:
 # Initializing the client
 client = commands.Bot(intents=intents)  # Setting prefix
 
+lemmatizer = nltk.stem.WordNetLemmatizer()
+try:
+    stop_words = set(nltk.corpus.stopwords.words('english'))
+except LookupError:
+    nltk.download('stopwords')
+    stop_words = set(nltk.corpus.stopwords.words('english'))
+
+
+def lemmatize(word):
+    lemmatizer.lemmatize(word)
+
+
+def remove_stopwords(sentence):
+    tokens = nltk.tokenize.word_tokenize(sentence)
+    filtered = [w for w in tokens if not w in stop_words]
+    return filtered
+
+
+def remove_non_alpha(sentence):
+    words = [word.lower() for word in sentence.split(" ") if word.isalpha()]
+    return words
+
 
 class DataManager:
-    def __init__(self, verbose:int=0) -> None:
+    def __init__(self, verbose: int = 0) -> None:
         try:
             self.con = mysql.connector.connect(
                 host=db_host,
@@ -155,7 +177,6 @@ class DataManager:
                 sql,
                 params
             )
-            
 
         self.con.commit()
 
@@ -166,7 +187,7 @@ class DataManager:
 
         self.con.commit()
 
-    def _get_all_messages(self, guild_id:int, author_id:int, verbose=0):
+    def _get_all_messages(self, guild_id: int, author_id: int, verbose=0):
         self.cur.execute("SELECT msg_content FROM `{}` WHERE author_id={};".format(str(guild_id), author_id))
         messages = self.cur.fetchall()
 
@@ -175,8 +196,8 @@ class DataManager:
         if verbose != 0:
             print(rtn[:10])
         return rtn
-        
-    def _most_used_words(self, guild_id:int, author_id:int, n:int=20, verbose=0):
+
+    def _most_used_words(self, guild_id: int, author_id: int, n: int = 20, verbose=0):
         messages = self._get_all_messages(guild_id, author_id)
 
         # all words from data
@@ -191,7 +212,7 @@ class DataManager:
             # if it is a link
             elif validators.url(sentence):
                 continue
-            
+
             # remove non alpha
             sentence = remove_non_alpha(sentence)
 
@@ -202,19 +223,19 @@ class DataManager:
                 # if it is a mention
                 if sentence[0:2] == "<@":
                     continue
-                
+
                 if word == "":
                     continue
-                
+
                 words.append(word)
 
         # get frequency of each word
         freq = collections.Counter(words)
-        
+
         rtn = freq.most_common(n)
 
         # verbose
         if verbose != 0:
             print(rtn)
-        
+
         return rtn
