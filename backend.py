@@ -118,7 +118,7 @@ def remove_non_alpha(sentence):
 
 
 class DataManager:
-    def __init__(self, verbose: int = 0) -> None:
+    def __init__(self) -> None:
         try:
             self.con = mysql.connector.connect(
                 host=db_host,
@@ -152,7 +152,7 @@ class DataManager:
 
         log.info(f"Created table for guild {guild_id}")
 
-    def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, ctx_id: int = None, mentions: list = None):
+    def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, ctx_id: int = None, mentions: list = None) -> None:
 
         sql = f"INSERT INTO `{guild_id}` (msg_id, msg_content, author_id, epoch"
         sql += ", ctx_id" if ctx_id else ""
@@ -181,14 +181,33 @@ class DataManager:
 
         self.con.commit()
 
-    def add_bulk_data(self, guild_id: int, data: list):
+    def add_bulk_data(self, guild_id: int, data: list) -> None:
         self.cur.executemany(
             f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, epoch, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?);",
             data)
 
         self.con.commit()
 
-    def _get_all_messages(self, guild_id: int, author_id: int):
+    def build_profile(self, guild_id:int, author_id:int):
+        msg_cache = self._get_all_messages(guild_id, author_id)
+
+        mmp = self._most_mentioned_person(guild_id, author_id)
+        tmmp = self._times_mentioned_and_by_who(guild_id, author_id)
+
+        return Profile(
+            guild_id,
+            author_id,
+            msg_cache,
+            self._most_used_words(guild_id, author_id, 2, msg_cache=msg_cache),
+            self._net_polarity(guild_id, author_id, msg_cache=msg_cache),
+            self._total_mentions(guild_id, author_id),
+            mmp[0][0],
+            mmp[0][1],
+            tmmp[1],
+            tmmp[0]
+        )
+
+    def _get_all_messages(self, guild_id: int, author_id: int) -> list[str]:
         self.cur.execute("SELECT msg_content FROM ? WHERE author_id=?;", (str(guild_id), author_id))
         messages = self.cur.fetchall()
 
@@ -197,11 +216,8 @@ class DataManager:
         log.debug(rtn[:10])
         return rtn
         
-    def _most_used_words(self, guild_id:int, author_id:int, n:int=20, verbose=0, msg_cache=None):
+    def _most_used_words(self, guild_id:int, author_id:int, n:int=2, verbose=0, msg_cache=None) -> list[tuple[str, int]]:
         messages = self._get_all_messages(guild_id, author_id) if msg_cache is None else msg_cache
-
-    def _most_used_words(self, guild_id: int, author_id: int, n: int = 20):
-        messages = self._get_all_messages(guild_id, author_id)
 
         # all words from data
         words = []
@@ -279,8 +295,13 @@ class DataManager:
             "SELECT author_id FROM ? WHERE ctx_id IS NULL AND mentions=?;", (str(guild_id), author_id))
         ids_ = self.cur.fetchall()
 
-        return len(ids_), collections.Counter(ids_).most_common(1)
+        return len(ids_),collections.Counter(ids_).most_common(1)[0][0] 
+    
 
+class Profile():
+    def __init__(self, guild_id:int, ID:int, messages:list, top_2_words:list, net_polarity:int, total_mentions:int, most_mentioned_person_id:int, total_times_mentioned:int, most_mentioned_by_id:int, most_mentioned_by_id_no:int) -> None:
+        self.guildID = guild_id # to be removed in the future
+        self.ID = ID
 
 class Profile:
     def __init__(self, guild_id: int, id_: int, messages: list, top_2_words: list, net_polarity: int,
@@ -300,3 +321,4 @@ class Profile:
         self.most_mentioned_person_id = most_mentioned_person_id
         self.total_times_mentioned = total_times_mentioned
         self.most_mentioned_by_id = most_mentioned_by_id
+        self.most_mentioned_by_id_no = most_mentioned_by_id_no
