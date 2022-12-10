@@ -187,17 +187,16 @@ class DataManager:
 
         self.con.commit()
 
-    def _get_all_messages(self, guild_id: int, author_id: int, verbose=0):
-        self.cur.execute("SELECT msg_content FROM `{}` WHERE author_id={};".format(str(guild_id), author_id))
+    def _get_all_messages(self, guild_id: int, author_id: int):
+        self.cur.execute("SELECT msg_content FROM ? WHERE author_id=?;", (str(guild_id), author_id))
         messages = self.cur.fetchall()
 
         rtn = [str(msg[0].decode()) for msg in messages]
 
-        if verbose != 0:
-            print(rtn[:10])
+        log.debug(rtn[:10])
         return rtn
 
-    def _most_used_words(self, guild_id: int, author_id: int, n: int = 20, verbose=0):
+    def _most_used_words(self, guild_id: int, author_id: int, n: int = 20):
         messages = self._get_all_messages(guild_id, author_id)
 
         # all words from data
@@ -231,11 +230,8 @@ class DataManager:
 
         # get frequency of each word
         freq = collections.Counter(words)
-
         rtn = freq.most_common(n)
 
-        # verbose
-        if verbose != 0:
-            print(rtn)
+        log.debug(rtn)
 
         return rtn
