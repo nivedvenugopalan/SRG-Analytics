@@ -141,11 +141,18 @@ class DataManager:
             params.append(ctx_id)
         if mentions:
             params.append(str(mentions))
-
-        self.cur.execute(
-            sql,
-            params
-        )
+        try:
+            self.cur.execute(
+                sql,
+                params
+            )
+        except mysql.connector.errors.InterfaceError:
+            self.add_guild(guild_id)
+            self.cur.execute(
+                sql,
+                params
+            )
+            
 
         self.con.commit()
 
