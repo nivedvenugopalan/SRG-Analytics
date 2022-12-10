@@ -25,12 +25,15 @@ import sys
 import time
 import discord
 import logging
+import validators
+import collections
 from discord.ext import commands
 from colorlog import ColoredFormatter
 import mysql.connector
 
 intents = discord.Intents.all()
 
+from helpers import *
 
 # Initializing the logger
 def colorlogger(name: str = 'my-discord-bot') -> logging.log:
@@ -92,7 +95,7 @@ client = commands.Bot(intents=intents)  # Setting prefix
 
 
 class DataManager:
-    def __init__(self) -> None:
+    def __init__(self, verbose:int=0) -> None:
         try:
             self.con = mysql.connector.connect(
                 host=db_host,
@@ -163,8 +166,55 @@ class DataManager:
 
         self.con.commit()
 
-    def get_all_user_messages(self, guild_id: int, user_id: int):
-        self.cur.execute("SELECT * FROM ? WHERE AUTHORID=?", (guild_id, user_id))
-        data = self.cur.fetchall()
-        print(data)
-        return data
+    def _get_all_messages(self, guild_id:int, author_id:int, verbose=0):
+        self.cur.execute("SELECT msg_content FROM `{}` WHERE author_id={};".format(str(guild_id), author_id))
+        messages = self.cur.fetchall()
+
+        rtn = [str(msg[0].decode()) for msg in messages]
+
+        if verbose != 0:
+            print(rtn[:10])
+        return rtn
+        
+    def _most_used_words(self, guild_id:int, author_id:int, n:int=20, verbose=0):
+        messages = self._get_all_messages(guild_id, author_id)
+
+        # all words from data
+        words = []
+        for sentence in messages:
+            # if it is empty
+            if sentence.strip() == "":
+                continue
+            # if it is a codeblock
+            elif sentence[0:3] == "```" or sentence[-3:] == '```':
+                continue
+            # if it is a link
+            elif validators.url(sentence):
+                continue
+            
+            # remove non alpha
+            sentence = remove_non_alpha(sentence)
+
+            # remove stopwords
+            sentence = remove_stopwords(" ".join(sentence))
+
+            for word in sentence:
+                # if it is a mention
+                if sentence[0:2] == "<@":
+                    continue
+                
+                if word == "":
+                    continue
+                
+                words.append(word)
+
+        # get frequency of each word
+        freq = collections.Counter(words)
+        
+        rtn = freq.most_common(n)
+
+        # verbose
+        if verbose != 0:
+            print(rtn)
+        
+        return rtn
