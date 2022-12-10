@@ -166,7 +166,7 @@ class DataManager:
             data)
 
         self.con.commit()
-
+    
     def _get_all_messages(self, guild_id:int, author_id:int, verbose=0):
         self.cur.execute("SELECT msg_content FROM `{}` WHERE author_id={};".format(str(guild_id), author_id))
         messages = self.cur.fetchall()
