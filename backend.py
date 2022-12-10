@@ -240,26 +240,28 @@ class DataManager:
 
         return rtn
 
-    def _net_polarity (self, guild_id:int, author_id:int, verbose=0, msg_cache=None):
+    def _net_polarity(self, guild_id: int, author_id: int, verbose=0, msg_cache=None):
         messages = self._get_all_messages(guild_id, author_id) if msg_cache is None else msg_cache
         number_of_messages = len(messages)
         MESSAGE = ".\n".join(messages)
 
-        polarity = round((TextBlob(MESSAGE).sentiment.polarity/number_of_messages)*10000,4)
+        polarity = round((TextBlob(MESSAGE).sentiment.polarity / number_of_messages) * 10000, 4)
 
         if verbose != 0:
             log.debug(polarity)
 
         return polarity
 
-    def _total_mentions(self, guild_id:int, author_id:int):
-        self.cur.execute("SELECT mentions FROM `{}` WHERE author_id={};".format(str(guild_id), author_id))
+    def _total_mentions(self, guild_id: int, author_id: int):
+        self.cur.execute("SELECT mentions FROM ? WHERE author_id=?;", (str(guild_id), author_id)
         messages = self.cur.fetchall()
 
         return len(messages)
 
-    def _most_mentioned_person(self, guild_id:int, author_id:int):
-        self.cur.execute("SELECT mentions FROM `{}` WHERE author_id={} AND ctx_id IS NULL AND mentions IS NOT NULL;".format(str(guild_id), author_id))
+    def _most_mentioned_person(self, guild_id: int, author_id: int):
+        self.cur.execute(
+            "SELECT mentions FROM ? WHERE author_id=? AND ctx_id IS NULL AND mentions IS NOT NULL;", (
+                str(guild_id), author_id))
         messages = self.cur.fetchall()
 
         mentions = []
@@ -272,17 +274,20 @@ class DataManager:
         freq = collections.Counter(mentions)
         return freq.most_common(1)
 
-    def _total_times_mentioned_and_by_who(self, guild_id:int, author_id:int):
-        self.cur.execute("SELECT author_id FROM `{}` WHERE ctx_id IS NULL AND mentions={};".format(str(guild_id), author_id))
+    def _total_times_mentioned_and_by_who(self, guild_id: int, author_id: int):
+        self.cur.execute(
+            "SELECT author_id FROM ? WHERE ctx_id IS NULL AND mentions=?;", (str(guild_id), author_id))
         ids_ = self.cur.fetchall()
 
-        return len(ids_),collections.Counter(ids_).most_common(1) 
-    
+        return len(ids_), collections.Counter(ids_).most_common(1)
 
-class Profile():
-    def __init__(self, guild_id:int, ID:int, messages:list, top_2_words:list, net_polarity:int, total_mentions:int, most_mentioned_person_id:int, total_times_mentioned:int, most_mentioned_by_id:int) -> None:
-        self.guildID = guild_id # to be removed in the future
-        self.ID = ID
+
+class Profile:
+    def __init__(self, guild_id: int, id_: int, messages: list, top_2_words: list, net_polarity: int,
+                 total_mentions: int, most_mentioned_person_id: int, total_times_mentioned: int,
+                 most_mentioned_by_id: int) -> None:
+        self.guildID = guild_id  # to be removed in the future
+        self.ID = id_
 
         # NLP
         self.messages = messages
