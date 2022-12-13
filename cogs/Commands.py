@@ -1,11 +1,6 @@
 import time
-
 import discord.ext.commands
-from discord.ext import commands
-from backend import DataManager
-
-# Importing our custom variables/functions from backend.py
-from backend import log
+from backend import *
 
 
 class Commands(commands.Cog):
@@ -69,9 +64,25 @@ class Commands(commands.Cog):
         await ctx.followup.send("Harvested data from the guild.")
         log.info(f"Harvested data from guild {guild.id} in {time.time() - start_time} seconds.")
 
-    @commands.slash_command(name="get_all_messages")
-    async def get_all_messages(self, ctx):
-        self.manager.get_all_user_messages(ctx.guild.id, ctx.author.id) # TODO fix this
+    @commands.slash_command(name="profile", description="Shows your profile.")
+    async def profile(self, ctx):
+        await ctx.defer()
+
+        if not ctx.guild:
+            await ctx.followup.send("This command can only be used in a server.")
+            return
+
+        profile = self.manager.build_profile(ctx.guild.id, ctx.author.id)
+
+        print(profile)
+
+        embed = discord.Embed(title=f"{ctx.author.name}'s Profile", color=0x00ff00)
+        embed.add_field(name="Guild ID", value=ctx.guild.id, inline=True)
+        embed.add_field(name="User ID", value=ctx.author.id, inline=False)
+
+
+
+
 
 
 # The `setup` function is required for the cog to work
