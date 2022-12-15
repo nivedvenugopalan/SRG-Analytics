@@ -155,6 +155,7 @@ class Profile:
     def __str__(self):
         return str(self.__dict__())
 
+
 class DataManager:
     def __init__(self) -> None:
         try:
@@ -295,7 +296,8 @@ class DataManager:
 
     def _most_mentioned_person(self, guild_id: int, author_id: int):
         self.cur.execute(
-            f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id=? AND ctx_id IS NULL AND mentions IS NOT NULL;", (author_id,))
+            f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id=? AND ctx_id IS NULL AND mentions IS NOT NULL;",
+            (author_id,))
         messages = self.cur.fetchall()
 
         mentions = []
@@ -313,7 +315,7 @@ class DataManager:
             f"SELECT author_id FROM `{str(guild_id)}` WHERE ctx_id IS NULL AND mentions=?;", (author_id,))
         ids_ = self.cur.fetchall()
 
-        print(collections.Counter(ids_).most_common(1))     # THIS IS RETURNING []
+        print(collections.Counter(ids_).most_common(1))  # THIS IS RETURNING []
 
         return len(ids_), collections.Counter(ids_).most_common(1)[0][0]
 
@@ -335,5 +337,3 @@ class DataManager:
             tmmp[1],
             tmmp[0]
         )
-
-

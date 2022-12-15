@@ -80,7 +80,31 @@ class Commands(commands.Cog):
         embed.add_field(name="Guild ID", value=ctx.guild.id, inline=True)
         embed.add_field(name="User ID", value=ctx.author.id, inline=False)
 
+    @commands.slash_command(name="topten", description="Shows the top ten users in the guild.")
+    async def topten(self, ctx):
+        await ctx.defer()
 
+        if not ctx.guild:
+            await ctx.followup.send("This command can only be used in a server.")
+            return
+
+        # select the top 10 author_id s from the database based on how many times the author_id appears in the database
+        self.manager.cur.execute(f"SELECT author_id, COUNT(author_id) FROM `{ctx.guild.id}` "
+                                 f"GROUP BY author_id ORDER BY COUNT(author_id) DESC LIMIT 10")
+
+        # fetch the data
+        data = self.manager.cur.fetchall()
+
+        # create an embed
+        embed = discord.Embed(title=f"Top 10 Users in {ctx.guild.name}", color=0x00ff00)
+
+        # iterate through the data
+        for i in range(len(data)):
+            # add a field to the embed
+            embed.add_field(name=f"{i + 1}. {data[i][1]}",
+                            value=f"<@{data[i][0]}>", inline=False)
+
+        await ctx.followup.send(embed=embed)
 
 
 
