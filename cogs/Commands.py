@@ -65,21 +65,23 @@ class Commands(commands.Cog):
         log.info(f"Harvested data from guild {guild.id} in {time.time() - start_time} seconds.")
 
     @commands.slash_command(name="profile", description="Shows your profile.")
-    async def profile(self, ctx):
+    async def profile(self, ctx, user: discord.Member = None):
         await ctx.defer()
+        if user is None:
+            user = ctx.author
 
         if not ctx.guild:
             await ctx.followup.send("This command can only be used in a server.")
             return
 
-        profile = self.manager.build_profile(ctx.guild.id, ctx.author.id)
+        profile = self.manager.build_profile(ctx.guild.id, user.id)
 
         print("\n\n\n")
         print(profile)
 
-        embed = discord.Embed(title=f"{ctx.author.name}'s Profile", color=0x00ff00)
+        embed = discord.Embed(title=f"{user.name}'s Profile", color=0x00ff00)
         embed.add_field(name="Guild ID", value=f"{ctx.guild.id}", inline=True)
-        embed.add_field(name="User ID", value=f"{ctx.author.id}", inline=False)
+        embed.add_field(name="User ID", value=f"{user.id}", inline=False)
         embed.add_field(name="Messages", value=f"{profile.no_of_messages}", inline=True)
         embed.add_field(name="Top 2 Words", value=f"{'`' + '`, `'.join([*[w[0] for w in profile.top_2_words], ]) + '`'}", inline=False)
         embed.add_field(name="Total Mentions", value=f"{profile.total_mentions}", inline=True)
