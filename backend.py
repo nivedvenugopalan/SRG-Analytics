@@ -95,8 +95,10 @@ else:
 client = commands.Bot(intents=intents)  # Setting prefix
 
 lemmatizer = nltk.stem.WordNetLemmatizer()
+nltk.download('punkt')
 try:
     stop_words = set(nltk.corpus.stopwords.words('english'))
+    punkt = nltk.tokenize.punkt.PunktSentenceTokenizer()
 except LookupError:
     nltk.download('stopwords')
     stop_words = set(nltk.corpus.stopwords.words('english'))
@@ -289,7 +291,7 @@ class DataManager:
         return polarity
 
     def _total_mentions(self, guild_id: int, author_id: int):
-        self.cur.execute("SELECT mentions FROM ? WHERE author_id=?;", (str(guild_id), author_id))
+        self.cur.execute(f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id};")
         messages = self.cur.fetchall()
 
         return len(messages)
@@ -311,10 +313,12 @@ class DataManager:
         return freq.most_common(1)
 
     def _total_times_mentioned_and_by_who(self, guild_id: int, author_id: int):
-        self.cur.execute(
-            f"SELECT author_id FROM `{str(guild_id)}` WHERE ctx_id IS NULL AND mentions=?;", (author_id,))
+        self.cur.execute(f"SELECT author_id FROM `{guild_id}` WHERE mentions LIKE '%{author_id}%';")
         ids_ = self.cur.fetchall()
-
+		
+        author_ids = [id_[0] for id_ in ids_]
+        ctr = collections.Counter(author_ids)
+        
         print(collections.Counter(ids_).most_common(1))  # THIS IS RETURNING []
 
         return len(ids_), collections.Counter(ids_).most_common(1)[0][0]
