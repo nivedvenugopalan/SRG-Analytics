@@ -321,13 +321,11 @@ class DataManager:
         author_ids = [id_[0] for id_ in ids_]
         ctr = collections.Counter(author_ids)
 
-        print(collections.Counter(ids_).most_common(1))  # THIS IS RETURNING []
-
-        return len(ids_), collections.Counter(ids_).most_common(1)[0][0]
+        return len(author_ids), ctr.most_common(1)[0][0]
 
     def build_profile(self, guild_id: int, author_id: int, messages=False):
-
         self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = {author_id};")
+
         msgs = self.cur.fetchone()[0] if messages is False else None
 
         mmp = self._most_mentioned_person(guild_id, author_id)
