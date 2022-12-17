@@ -291,8 +291,12 @@ class DataManager:
     def _total_mentions(self, guild_id: int, author_id: int):
         self.cur.execute(f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id};")
         messages = self.cur.fetchall()
+        mentions = 0
+        for msg in messages:
+            if list(msg)[0] is not None:
+                mentions+=1
 
-        return len(messages)
+        return mentions
 
     def _most_mentioned_person(self, guild_id: int, author_id: int):
         self.cur.execute(
@@ -317,14 +321,12 @@ class DataManager:
         author_ids = [id_[0] for id_ in ids_]
         ctr = collections.Counter(author_ids)
 
-        print(collections.Counter(ids_).most_common(1))  # THIS IS RETURNING []
+        return len(author_ids), ctr.most_common(1)[0][0]
 
-        return len(ids_), collections.Counter(ids_).most_common(1)[0][0]
-
-    def build_profile(self, guild_id: int, author_id: int):
-
+    def build_profile(self, guild_id: int, author_id: int, messages=False):
         self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = {author_id};")
-        no_msgs = self.cur.fetchone()[0]
+
+        msgs = self.cur.fetchone()[0] if messages is False else None
 
         mmp = self._most_mentioned_person(guild_id, author_id)
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
@@ -334,7 +336,7 @@ class DataManager:
         return Profile(
             guild_id,
             author_id,
-            no_msgs,
+            msgs,
             self._most_used_words(guild_id, author_id, 2, msg_cache=msg_cache),
             self._net_polarity(guild_id, author_id, msg_cache=msg_cache),
             self._total_mentions(guild_id, author_id),
