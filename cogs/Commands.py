@@ -74,11 +74,21 @@ class Commands(commands.Cog):
 
         profile = self.manager.build_profile(ctx.guild.id, ctx.author.id)
 
+        print("\n\n\n")
         print(profile)
 
         embed = discord.Embed(title=f"{ctx.author.name}'s Profile", color=0x00ff00)
-        embed.add_field(name="Guild ID", value=ctx.guild.id, inline=True)
-        embed.add_field(name="User ID", value=ctx.author.id, inline=False)
+        embed.add_field(name="Guild ID", value=f"{ctx.guild.id}", inline=True)
+        embed.add_field(name="User ID", value=f"{ctx.author.id}", inline=False)
+        embed.add_field(name="Messages", value=f"{profile.no_of_messages}", inline=True)
+        embed.add_field(name="Top 2 Words", value=f"{'`' + '`, `'.join([*[w[0] for w in profile.top_2_words], ]) + '`'}", inline=False)
+        embed.add_field(name="Total Mentions", value=f"{profile.total_mentions}", inline=True)
+        embed.add_field(name="Most Mentioned User", value=f"<@{profile.most_mentioned_person_id}>", inline=False)
+        embed.add_field(name="Times Mentioned", value=f"{profile.total_times_mentioned}", inline=True)
+        embed.add_field(name="Most Mentioned by", value=f"<@{profile.most_mentioned_by_id[0]}>", inline=False)
+        embed.add_field(name="Times Mentioned by them", value=f"{profile.most_mentioned_by_id_no}", inline=True)
+
+        await ctx.followup.send(embed=embed)
 
     @commands.slash_command(name="topten", description="Shows the top ten users in the guild.")
     async def topten(self, ctx):

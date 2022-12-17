@@ -120,15 +120,14 @@ def remove_non_alpha(sentence):
 
 
 class Profile:
-    def __init__(self, guild_id: int, id_: int, messages: list, top_2_words: list, net_polarity: int,
+    def __init__(self, guild_id: int, id_: int, no_of_messages: int, top_2_words: list, net_polarity: int,
                  total_mentions: int, most_mentioned_person_id: int, total_times_mentioned: int,
                  most_mentioned_by_id: int, most_mentioned_by_id_no: int) -> None:
         self.guildID = guild_id  # to be removed in the future
         self.ID = id_
 
         # NLP
-        self.messages = messages
-        self.number_of_messages = len(messages)
+        self.no_of_messages = no_of_messages
         self.top_2_words = top_2_words
         self.net_polarity = net_polarity
 
@@ -143,8 +142,7 @@ class Profile:
         return {
             "guildID": self.guildID,
             "ID": self.ID,
-            "messages": self.messages,
-            "number_of_messages": self.number_of_messages,
+            "number_of_messages": self.no_of_messages,
             "top_2_words": self.top_2_words,
             "net_polarity": self.net_polarity,
             "total_mentions": self.total_mentions,
@@ -315,24 +313,28 @@ class DataManager:
     def _total_times_mentioned_and_by_who(self, guild_id: int, author_id: int):
         self.cur.execute(f"SELECT author_id FROM `{guild_id}` WHERE mentions LIKE '%{author_id}%';")
         ids_ = self.cur.fetchall()
-		
+
         author_ids = [id_[0] for id_ in ids_]
         ctr = collections.Counter(author_ids)
-        
+
         print(collections.Counter(ids_).most_common(1))  # THIS IS RETURNING []
 
         return len(ids_), collections.Counter(ids_).most_common(1)[0][0]
 
     def build_profile(self, guild_id: int, author_id: int):
-        msg_cache = self._get_all_messages(guild_id, author_id)
+
+        self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = {author_id};")
+        no_msgs = self.cur.fetchone()[0]
 
         mmp = self._most_mentioned_person(guild_id, author_id)
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
 
+        msg_cache = self._get_all_messages(guild_id, author_id)
+
         return Profile(
             guild_id,
             author_id,
-            msg_cache,
+            no_msgs,
             self._most_used_words(guild_id, author_id, 2, msg_cache=msg_cache),
             self._net_polarity(guild_id, author_id, msg_cache=msg_cache),
             self._total_mentions(guild_id, author_id),
