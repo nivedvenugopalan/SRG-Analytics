@@ -164,7 +164,7 @@ class Profile:
         self.ID = id_
 
         # NLP
-        self.no_of_messages = no_of_messages
+        self.no_of_messages = no_of_messages[0]
         self.top_2_words = top_2_words
         self.net_polarity = net_polarity
 
@@ -313,13 +313,21 @@ class DataManager:
             f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL;",)
         messages = self.cur.fetchall()
 
-        mentions = [int(id_) for mention in messages for id_ in list(mention) if id_ != author_id]
+        #
+        # the next list is -
+        # for each message in list(messages)
+        # for each item in the list(message)
+        # if the id is not the author's id
+        # add the id to the list
 
-        freq = collections.Counter(mentions)
+        ids = [id_[1:-1] for message in list(messages) for id_ in list(message) if id_ != author_id]
+        print(ids)
+
+        freq = collections.Counter(ids)
         return freq.most_common(1)
 
     def _total_times_mentioned_and_by_who(self, guild_id: int, author_id: int):
-        self.cur.execute(f"SELECT author_id FROM `{guild_id}` WHERE mentions LIKE '%{author_id}%';")
+        self.cur.execute(f"SELECT author_id FROM `{guild_id}` WHERE mentions LIKE '%{author_id}%' AND ctx_id != '{author_id}';")
         ids_ = self.cur.fetchall()
 
         author_ids = [id_[0] for id_ in ids_]
