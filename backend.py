@@ -104,9 +104,7 @@ except LookupError:
     stop_words = set(nltk.corpus.stopwords.words('english'))
 
 # CUSTOM STOPWORDS
-stop_words.update([
-    "u", "yes", "like", "lmao", "oh", "lol", "huh", "what", "wut", "um", "ok", "ig", "sure", "yeh", "yeah", "yea", "k", "kk", "ook", "im", "one", "ugh", "wht", "yea", "yet", "lmafo", "dude"
-])
+
 
 
 def lemmatize(word):
@@ -227,6 +225,11 @@ class DataManager:
         self.con.commit()
 
         log.info(f"Created table for guild {guild_id}")
+
+    def _update_stopwords(self):
+        self.cur.execute("SELECT word FROM stop_words;")
+        additional_words = self.cur.fetchall()
+        stop_words.update(additional_words)
 
     def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, ctx_id: int = None,
                  mentions: list = None) -> None:
