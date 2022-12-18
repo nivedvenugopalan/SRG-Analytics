@@ -324,13 +324,17 @@ class DataManager:
         return freq.most_common(1)
 
     def _total_times_mentioned_and_by_who(self, guild_id: int, author_id: int):
-        self.cur.execute(f"SELECT author_id FROM `{guild_id}` WHERE mentions LIKE '%{author_id}%' AND ctx_id != '{author_id}';")
+        self.cur.execute(f"SELECT author_id FROM `{guild_id}` WHERE mentions LIKE '%{author_id}%' AND ctx_id IS NULL;")
         ids_ = self.cur.fetchall()
+        print(ids_)
 
         author_ids = [id_[0] for id_ in ids_]
+        print(author_ids)
         ctr = collections.Counter(author_ids)
+        print(ctr)
+        most_common = ctr.most_common(1)[0]
 
-        return len(author_ids), ctr.most_common(1)[0][0]
+        return most_common[1], most_common[0]
 
     def build_profile(self, guild_id: int, author_id: int, messages=False):
         self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = '{author_id}';")
