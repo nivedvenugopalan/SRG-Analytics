@@ -299,7 +299,7 @@ class DataManager:
         return polarity
 
     def _total_mentions(self, guild_id: int, author_id: int):
-        self.cur.execute(f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND CTX_ID IS NULL;")
+        self.cur.execute(f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL AND ctx_id IS NULL;")
         messages = self.cur.fetchall()
         mentions = 0
         for msg in messages:
@@ -313,12 +313,7 @@ class DataManager:
             f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL;",)
         messages = self.cur.fetchall()
 
-        mentions = []
-        for mention in messages:
-            if list(mention)[0] is not None:
-                lst = list(mention)[0].strip('][').split(', ')
-                for id_ in lst:
-                    mentions.append(int(id_))
+        mentions = [int(id_) for mention in messages for id_ in list(mention) if id_ != author_id]
 
         freq = collections.Counter(mentions)
         return freq.most_common(1)
