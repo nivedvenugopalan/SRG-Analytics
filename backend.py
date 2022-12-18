@@ -103,6 +103,11 @@ except LookupError:
     nltk.download('stopwords')
     stop_words = set(nltk.corpus.stopwords.words('english'))
 
+# CUSTOM STOPWORDS
+stop_words.update([
+    "u", "yes", "like", "lmao", "oh", "lol", "huh", "what", "wut"
+])
+
 
 def lemmatize(word):
     lemmatizer.lemmatize(word)
@@ -116,6 +121,38 @@ def remove_stopwords(sentence):
 
 def remove_non_alpha(sentence):
     words = [word.lower() for word in sentence.split(" ") if word.isalpha()]
+    return words
+
+def process_messages(messages):
+    """Returns a list of all valid words when given a list of messages from the databse."""
+    # all words from data
+    words = []
+    for sentence in messages:
+        # if it is empty
+        if sentence.strip() == "":
+            continue
+        # if it is a codeblock
+        elif sentence[0:3] == "```" or sentence[-3:] == '```':
+            continue
+        # if it is a link
+        elif validators.url(sentence):
+            continue
+
+        # remove non alpha
+        sentence = remove_non_alpha(sentence)
+
+        # remove stopwords
+        sentence = remove_stopwords(" ".join(sentence))
+
+        for word in sentence:
+            # if it is a mention
+            if sentence[0:2] == "<@":
+                continue
+
+            if word == "":
+                continue
+
+            words.append(word)
     return words
 
 
@@ -240,34 +277,7 @@ class DataManager:
     def _most_used_words(self, guild_id: int, author_id: int, n: int = 2, msg_cache=None) -> list[tuple[str, int]]:
         messages = self._get_all_messages(guild_id, author_id) if msg_cache is None else msg_cache
 
-        # all words from data
-        words = []
-        for sentence in messages:
-            # if it is empty
-            if sentence.strip() == "":
-                continue
-            # if it is a codeblock
-            elif sentence[0:3] == "```" or sentence[-3:] == '```':
-                continue
-            # if it is a link
-            elif validators.url(sentence):
-                continue
-
-            # remove non alpha
-            sentence = remove_non_alpha(sentence)
-
-            # remove stopwords
-            sentence = remove_stopwords(" ".join(sentence))
-
-            for word in sentence:
-                # if it is a mention
-                if sentence[0:2] == "<@":
-                    continue
-
-                if word == "":
-                    continue
-
-                words.append(word)
+        words = process_messages(messages)
 
         # get frequency of each word
         freq = collections.Counter(words)
@@ -289,7 +299,7 @@ class DataManager:
         return polarity
 
     def _total_mentions(self, guild_id: int, author_id: int):
-        self.cur.execute(f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id};")
+        self.cur.execute(f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND CTX_ID IS NULL;")
         messages = self.cur.fetchall()
         mentions = 0
         for msg in messages:
@@ -300,14 +310,13 @@ class DataManager:
 
     def _most_mentioned_person(self, guild_id: int, author_id: int):
         self.cur.execute(
-            f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id=? AND ctx_id IS NULL AND mentions IS NOT NULL;",
-            (author_id,))
+            f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL;",)
         messages = self.cur.fetchall()
 
         mentions = []
         for mention in messages:
-            if mention[0] is not None:
-                lst = mention[0].strip('][').split(', ')
+            if list(mention)[0] is not None:
+                lst = list(mention)[0].strip('][').split(', ')
                 for id_ in lst:
                     mentions.append(int(id_))
 
@@ -326,7 +335,7 @@ class DataManager:
     def build_profile(self, guild_id: int, author_id: int, messages=False):
         self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = {author_id};")
 
-        msgs = self.cur.fetchone()[0] if messages is False else None
+        msgs = self.cur.fetchall()[0] if messages is False else None
 
         mmp = self._most_mentioned_person(guild_id, author_id)
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
@@ -345,3 +354,18 @@ class DataManager:
             tmmp[1],
             tmmp[0]
         )
+
+    ### server things
+    def top_server_messages(self, guild_id: int, n: int):
+        self.cur.execute("SELECT msg_content FROM `{str(guild_id)}`")
+        messages = self.cur.fetchall()
+
+        words = process_messages(messages)
+
+        # get frequency of each word
+        freq = collections.Counter(words)
+        rtn = freq.most_common(n)
+
+        log.debug(rtn)
+
+        return rtn

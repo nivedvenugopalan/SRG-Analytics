@@ -118,7 +118,9 @@ class Commands(commands.Cog):
 
         await ctx.followup.send(embed=embed)
 
-
+    @commands.slash_command(name="topword", description="Shows the top word used in the guild.")
+    async def topword(self, ctx):
+        pass
 
 
 # The `setup` function is required for the cog to work
