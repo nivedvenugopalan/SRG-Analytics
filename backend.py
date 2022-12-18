@@ -105,7 +105,7 @@ except LookupError:
 
 # CUSTOM STOPWORDS
 stop_words.update([
-    "u", "yes", "like", "lmao", "oh", "lol", "huh", "what", "wut"
+    "u", "yes", "like", "lmao", "oh", "lol", "huh", "what", "wut", "um", "ok", "ig", "sure", "yeh", "yeah", "yea", "k", "kk", "ook", "im", "one", "ugh", "wht", "yea", "yet", "lmafo", "dude"
 ])
 
 
@@ -313,17 +313,14 @@ class DataManager:
             f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL;",)
         messages = self.cur.fetchall()
 
-        #
-        # the next list is -
-        # for each message in list(messages)
-        # for each item in the list(message)
-        # if the id is not the author's id
-        # add the id to the list
+        mentions = []
+        for mention in messages:
+            if list(mention)[0] is not None:
+                lst = list(mention)[0].strip('][').split(', ')
+                for id_ in lst:
+                    mentions.append(int(id_))
 
-        ids = [id_[1:-1] for message in list(messages) for id_ in list(message) if id_ != author_id]
-        print(ids)
-
-        freq = collections.Counter(ids)
+        freq = collections.Counter(mentions)
         return freq.most_common(1)
 
     def _total_times_mentioned_and_by_who(self, guild_id: int, author_id: int):
