@@ -304,7 +304,7 @@ class DataManager:
         mentions = 0
         for msg in messages:
             if list(msg)[0] is not None:
-                mentions+=1
+                mentions += 1
 
         return mentions
 
@@ -333,7 +333,7 @@ class DataManager:
         return len(author_ids), ctr.most_common(1)[0][0]
 
     def build_profile(self, guild_id: int, author_id: int, messages=False):
-        self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = {author_id};")
+        self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = '{author_id}';")
 
         msgs = self.cur.fetchall()[0] if messages is False else None
 
