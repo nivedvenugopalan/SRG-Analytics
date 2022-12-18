@@ -103,9 +103,6 @@ except LookupError:
     nltk.download('stopwords')
     stop_words = set(nltk.corpus.stopwords.words('english'))
 
-# CUSTOM STOPWORDS
-
-
 
 def lemmatize(word):
     lemmatizer.lemmatize(word)
@@ -147,8 +144,9 @@ def process_messages(messages):
             if sentence[0:2] == "<@":
                 continue
 
-            if word == "":
+            if len(word) <= 1:
                 continue
+                
 
             words.append(word)
     return words
@@ -226,11 +224,6 @@ class DataManager:
 
         log.info(f"Created table for guild {guild_id}")
 
-    def _update_stopwords(self):
-        self.cur.execute("SELECT word FROM stop_words;")
-        additional_words = self.cur.fetchall()
-        stop_words.update(additional_words)
-
     def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, ctx_id: int = None,
                  mentions: list = None) -> None:
 
@@ -273,7 +266,7 @@ class DataManager:
         messages = self.cur.fetchall()
 
         rtn = [str(msg[0].decode()) for msg in messages]
-
+        
         log.debug(rtn[:10])
         return rtn
 
