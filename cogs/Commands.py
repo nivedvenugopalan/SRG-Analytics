@@ -87,7 +87,7 @@ class Commands(commands.Cog):
         embed.add_field(name="Total Mentions", value=f"{profile.total_mentions}", inline=False)
         embed.add_field(name="Most Mentioned User", value=f"<@{profile.most_mentioned_person_id}>", inline=True)
         embed.add_field(name="Times Mentioned", value=f"{profile.total_times_mentioned}", inline=True)
-        embed.add_field(name="Most Mentioned by", value=f"<@{profile.most_mentioned_by_id}>", inline=False)
+        embed.add_field(name="Most Mentioned by", value=f"<@{profile.most_mentioned_by_id}>", inline=True)
         embed.add_field(name="Times", value=f"{profile.most_mentioned_by_id_no}", inline=True)
 
         await ctx.followup.send(embed=embed)
