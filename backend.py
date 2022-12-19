@@ -160,7 +160,7 @@ class Profile:
         self.ID = id_
 
         # NLP
-        self.no_of_messages = no_of_messages[0]
+        self.no_of_messages = no_of_messages
         self.top_2_words = top_2_words
         self.net_polarity = net_polarity
 
@@ -332,10 +332,10 @@ class DataManager:
 
         return most_common[1], most_common[0]
 
-    def build_profile(self, guild_id: int, author_id: int, messages=False):
+    def build_profile(self, guild_id: int, author_id: int):
         self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = '{author_id}';")
 
-        msgs = self.cur.fetchall()[0] if messages is False else None
+        msgs = self.cur.fetchone()[0]
 
         mmp = self._most_mentioned_person(guild_id, author_id)
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
@@ -357,7 +357,7 @@ class DataManager:
 
     ### server things
     def top_server_messages(self, guild_id: int, n: int):
-        self.cur.execute("SELECT msg_content FROM `{str(guild_id)}`")
+        self.cur.execute(f"SELECT msg_content FROM `{str(guild_id)}`")
         messages = self.cur.fetchall()
 
         words = process_messages(messages)
