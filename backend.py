@@ -180,6 +180,7 @@ class Profile:
             "number_of_messages": self.no_of_messages,
             "top_2_words": self.top_2_words,
             "net_polarity": self.net_polarity,
+            "most_mentioned_channels": self.most_mentioned_channels,
             "total_mentions": self.total_mentions,
             "most_mentioned_person_id": self.most_mentioned_person_id,
             "total_times_mentioned": self.total_times_mentioned,
@@ -325,7 +326,8 @@ class DataManager:
 
         return most_common[1], most_common[0]
 
-    def _most_mentioned_channels(self, guild_id, author_id)
+    def _most_mentioned_channels(self, guild_id, author_id):
+        pass
 
     def build_profile(self, guild_id: int, author_id: int):
         msgs = self.msg_count(guild_id, author_id)
