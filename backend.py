@@ -118,6 +118,7 @@ def remove_non_alpha(sentence):
     words = [word.lower() for word in sentence.split(" ") if word.isalpha()]
     return words
 
+
 def process_messages(messages):
     """Returns a list of all valid words when given a list of messages from the databse."""
     # all words from data
@@ -146,7 +147,6 @@ def process_messages(messages):
 
             if len(word) <= 1:
                 continue
-                
 
             words.append(word)
     return words
@@ -266,11 +266,11 @@ class DataManager:
         messages = self.cur.fetchall()
 
         rtn = [str(msg[0].decode()) for msg in messages]
-        
+
         log.debug(rtn[:10])
         return rtn
 
-    def _most_used_words(self, guild_id: int, author_id: int, n: int = 2, msg_cache=None) -> list[tuple[str, int]]:
+    def _most_used_words(self, guild_id: int, author_id: int, n: int = 5, msg_cache=None) -> list[tuple[str, int]]:
         messages = self._get_all_messages(guild_id, author_id) if msg_cache is None else msg_cache
 
         words = process_messages(messages)
@@ -295,7 +295,8 @@ class DataManager:
         return polarity
 
     def _total_mentions(self, guild_id: int, author_id: int):
-        self.cur.execute(f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL AND ctx_id IS NULL;")
+        self.cur.execute(
+            f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL AND ctx_id IS NULL;")
         messages = self.cur.fetchall()
         mentions = 0
         for msg in messages:
@@ -306,7 +307,7 @@ class DataManager:
 
     def _most_mentioned_person(self, guild_id: int, author_id: int):
         self.cur.execute(
-            f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL;",)
+            f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL;", )
         messages = self.cur.fetchall()
 
         mentions = []
@@ -333,9 +334,8 @@ class DataManager:
         return most_common[1], most_common[0]
 
     def build_profile(self, guild_id: int, author_id: int):
-        self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = '{author_id}';")
-
-        msgs = self.cur.fetchone()[0]
+        msgs = self.msg_count(guild_id, author_id)
+        log.debug(f"Message Count: {msgs}")
 
         mmp = self._most_mentioned_person(guild_id, author_id)
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
@@ -346,7 +346,7 @@ class DataManager:
             guild_id,
             author_id,
             msgs,
-            self._most_used_words(guild_id, author_id, 2, msg_cache=msg_cache),
+            self._most_used_words(guild_id, author_id, 5, msg_cache=msg_cache),
             self._net_polarity(guild_id, author_id, msg_cache=msg_cache),
             self._total_mentions(guild_id, author_id),
             mmp[0][0],
@@ -369,3 +369,10 @@ class DataManager:
         log.debug(rtn)
 
         return rtn
+
+    def msg_count(self, guild_id, author_id):
+        self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = '{author_id}';")
+
+        msgs = self.cur.fetchone()[0]
+
+        return msgs

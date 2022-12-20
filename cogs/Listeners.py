@@ -22,10 +22,16 @@ class Listeners(commands.Cog):
         # Ignore bot messages
         if ctx.author.bot:
             return
+        c = self.manager.msg_count(ctx.guild.id, ctx.author.id)
+        log.debug(f"User Messages: {c}")
 
         self.manager.add_data(ctx.guild.id, ctx.id, ctx.content, ctx.author.id,
                               ctx.reference.message_id if ctx.reference else None,
                               [mention.id for mention in ctx.mentions] if ctx.mentions != [] else None)
+
+        c = self.manager.msg_count(ctx.guild.id, ctx.author.id)
+        log.debug(f"User Messages after commit: {c}")
+
         log.debug(f"Added message {ctx.id} to database.")
 
 

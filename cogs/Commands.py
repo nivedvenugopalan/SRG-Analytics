@@ -1,4 +1,3 @@
-import time
 import discord.ext.commands
 from backend import *
 
@@ -82,8 +81,8 @@ class Commands(commands.Cog):
         embed = discord.Embed(title=f"{user.name}'s Profile", color=discord.Color.blurple())
         embed.add_field(name="Guild ID", value=f"{ctx.guild.id}", inline=True)
         embed.add_field(name="User ID", value=f"{user.id}", inline=True)
-        embed.add_field(name="Messages", value=f"{profile.no_of_messages[0]}", inline=False)
-        embed.add_field(name="Top 2 Words", value=f"{'`' + '`, `'.join([*[w[0] for w in profile.top_2_words], ]) + '`'}", inline=True)
+        embed.add_field(name="Messages", value=f"{profile.no_of_messages}", inline=False)
+        embed.add_field(name="Top 5 Words", value=", ".join([f"`{w[0]}`" for w in profile.top_2_words]), inline=True)
         embed.add_field(name="Total Mentions", value=f"{profile.total_mentions}", inline=False)
         embed.add_field(name="Most Mentioned User", value=f"<@{profile.most_mentioned_person_id}>", inline=True)
         embed.add_field(name="Times Mentioned", value=f"{profile.total_times_mentioned}", inline=True)
