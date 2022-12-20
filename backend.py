@@ -96,9 +96,9 @@ client = commands.Bot(intents=intents)  # Setting prefix
 
 lemmatizer = nltk.stem.WordNetLemmatizer()
 nltk.download('punkt')
+
 try:
     stop_words = set(nltk.corpus.stopwords.words('english'))
-    punkt = nltk.tokenize.punkt.PunktSentenceTokenizer()
 except LookupError:
     nltk.download('stopwords')
     stop_words = set(nltk.corpus.stopwords.words('english'))
@@ -120,7 +120,7 @@ def remove_non_alpha(sentence):
 
 
 def process_messages(messages):
-    """Returns a list of all valid words when given a list of messages from the databse."""
+    """Returns a list of all valid words when given a list of messages from the database."""
     # all words from data
     words = []
     for sentence in messages:
@@ -154,6 +154,7 @@ def process_messages(messages):
 
 class Profile:
     def __init__(self, guild_id: int, id_: int, no_of_messages: int, top_2_words: list, net_polarity: int,
+                 most_mentioned_channels: list,
                  total_mentions: int, most_mentioned_person_id: int, total_times_mentioned: int,
                  most_mentioned_by_id: int, most_mentioned_by_id_no: int) -> None:
         self.guildID = guild_id  # to be removed in the future
@@ -163,6 +164,7 @@ class Profile:
         self.no_of_messages = no_of_messages
         self.top_2_words = top_2_words
         self.net_polarity = net_polarity
+        self.most_mentioned_channels = most_mentioned_channels
 
         # Mentions
         self.total_mentions = total_mentions
@@ -224,22 +226,12 @@ class DataManager:
 
         log.info(f"Created table for guild {guild_id}")
 
-    def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, ctx_id: int = None,
-                 mentions: list = None) -> None:
+    def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, channel_id, attachments: int = 0,
+                 ctx_id: int = None, mentions: list = None) -> None:
 
-        sql = f"INSERT INTO `{guild_id}` (msg_id, msg_content, author_id, epoch"
-        sql += ", ctx_id" if ctx_id else ""
-        sql += ", mentions" if mentions else ""
-        sql += ") VALUES (?, ?, ?, ?"
-        sql += ", ?" if ctx_id else ""
-        sql += ", ?" if mentions else ""
-        sql += ");"
+        sql = f"INSERT INTO `{guild_id}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+        params = [msg_id, msg, author_id, channel_id, int(time.time()) * 1000, attachments, ctx_id, mentions]
 
-        params = [msg_id, msg, author_id, int(time.time()) * 1000]
-        if ctx_id:
-            params.append(ctx_id)
-        if mentions:
-            params.append(str(mentions))
         try:
             self.cur.execute(
                 sql,
@@ -256,7 +248,7 @@ class DataManager:
 
     def add_bulk_data(self, guild_id: int, data: list) -> None:
         self.cur.executemany(
-            f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, epoch, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?);",
+            f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
             data)
 
         self.con.commit()
@@ -333,9 +325,13 @@ class DataManager:
 
         return most_common[1], most_common[0]
 
+    def _most_mentioned_channels(self, guild_id, author_id)
+
     def build_profile(self, guild_id: int, author_id: int):
         msgs = self.msg_count(guild_id, author_id)
         log.debug(f"Message Count: {msgs}")
+
+        most_mentioned_channels = self._most_mentioned_channels(guild_id, author_id)
 
         mmp = self._most_mentioned_person(guild_id, author_id)
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
@@ -348,6 +344,7 @@ class DataManager:
             msgs,
             self._most_used_words(guild_id, author_id, 5, msg_cache=msg_cache),
             self._net_polarity(guild_id, author_id, msg_cache=msg_cache),
+            most_mentioned_channels,
             self._total_mentions(guild_id, author_id),
             mmp[0][0],
             mmp[0][1],
@@ -355,7 +352,6 @@ class DataManager:
             tmmp[0]
         )
 
-    ### server things
     def top_server_messages(self, guild_id: int, n: int):
         self.cur.execute(f"SELECT msg_content FROM `{str(guild_id)}`")
         messages = self.cur.fetchall()
