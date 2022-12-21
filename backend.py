@@ -216,7 +216,9 @@ class DataManager:
                 msg_id BIGINT NOT NULL,
                 msg_content TEXT,
                 author_id BIGINT NOT NULL,
+                channel_id BIGINT NOT NULL,
                 epoch BIGINT NOT NULL,
+                attachments SMALLINT ,
                 ctx_id BIGINT,
                 mentions TEXT,
                 PRIMARY KEY (id)

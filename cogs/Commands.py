@@ -5,7 +5,6 @@ from backend import *
 class Commands(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.manager = DataManager()
         self.count = 0
 
     # Use @command.Cog.listener() for an event-listener (on_message, on_ready, etc.)
@@ -18,6 +17,7 @@ class Commands(commands.Cog):
     @commands.slash_command(name="harvest", description="Harvests data from a guild.")
     async def harvest(self, ctx):
         await ctx.defer()
+        self.manager = DataManager()
 
         guild = ctx.guild
         data_list = {}
@@ -28,10 +28,13 @@ class Commands(commands.Cog):
         async def harvest_channel(channel):
             # Iterate through all messages in the channel
             async for message in channel.history(limit=None):
+                if message.author.bot:
+                    continue
+
                 data_list[channel.name].append([
-                    message.id, message.content, message.author.id, message.created_at,
-                    message.reference.message_id if message.reference else None,
-                    str([mention.id for mention in message.mentions]) if message.mentions != [] else None
+                    message.id, message.content, message.author.id, message.channel.id,
+                    message.created_at, len(message.attachments), message.reference.message_id if message.reference
+                    else None, str([mention.id for mention in message.mentions]) if message.mentions != [] else None
                 ])
                 self.count += 1
                 if self.count % 1000 == 0:
@@ -66,6 +69,7 @@ class Commands(commands.Cog):
     @commands.slash_command(name="profile", description="Shows your profile.")
     async def profile(self, ctx, user: discord.Member = None):
         await ctx.defer()
+        self.manager = DataManager()
         if user is None:
             user = ctx.author
 
@@ -94,6 +98,7 @@ class Commands(commands.Cog):
     @commands.slash_command(name="topten", description="Shows the top ten users in the guild.")
     async def topten(self, ctx):
         await ctx.defer()
+        self.manager = DataManager()
 
         if not ctx.guild:
             await ctx.followup.send("This command can only be used in a server.")
@@ -116,6 +121,19 @@ class Commands(commands.Cog):
                             value=f"<@{data[i][0]}>", inline=False)
 
         await ctx.followup.send(embed=embed)
+
+
+    @commands.slash_command(name="topchannel", description="Shows the help menu.")
+    async def topchannel(self, ctx):
+        self.manager = DataManager()
+        self.manager.cur.execute(f"SELECT channel_id, COUNT(channel_id) FROM `{ctx.guild.id}` LIMIT 5 ORDER BY COUNT(channel_id) DESC")
+        data = self.manager.cur.fetchall()
+        embed = discord.Embed(title=f"Top 5 Channels in {ctx.guild.name}", color=0x00ff00)
+        for i in range(len(data)):
+            embed.add_field(name=f"{i + 1}. {data[i][1]}",
+                            value=f"<#{data[i][0]}>", inline=False)
+        await ctx.followup.send(embed=embed)
+
 
     @commands.slash_command(name="topword", description="Shows the top word used in the guild.")
     async def topword(self, ctx):
