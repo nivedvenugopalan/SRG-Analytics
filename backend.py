@@ -156,7 +156,8 @@ class Profile:
     def __init__(self, guild_id: int, id_: int, no_of_messages: int, top_2_words: list, net_polarity: int,
                  most_mentioned_channels: list,
                  total_mentions: int, most_mentioned_person_id: int, total_times_mentioned: int,
-                 most_mentioned_by_id: int, most_mentioned_by_id_no: int) -> None:
+                 most_mentioned_by_id: int, most_mentioned_by_id_no: int,
+                 most_chatted_channel_id: int) -> None:
         self.guildID = guild_id  # to be removed in the future
         self.ID = id_
 
@@ -172,6 +173,10 @@ class Profile:
         self.total_times_mentioned = total_times_mentioned
         self.most_mentioned_by_id = most_mentioned_by_id
         self.most_mentioned_by_id_no = most_mentioned_by_id_no
+
+        # Channels
+        self.most_chatted_channel_id = most_chatted_channel_id
+
 
     def __dict__(self):
         return {
@@ -376,3 +381,19 @@ class DataManager:
         msgs = self.cur.fetchone()[0]
 
         return msgs
+
+    def most_chatted_channel_id(self, guild_id, author_id):
+        self.cur.execute(f"SELECT channel_id FROM `{guild_id}` WHERE author_id = '{author_id}'")
+
+        channels = self.cur.fetchall()
+
+        freq = collections.Counter(channels)
+
+        return list(freq.most_common(1)[0])[0]
+
+    def most_active_time(self, guild_id, author_id):
+        self.cur.execute(f"SELECT epoch FROM `{guild_id}` WHERE author_id = '{author_id}'")
+
+        epoch_list = self.cur.fetchall()
+
+        print(epoch_list)
