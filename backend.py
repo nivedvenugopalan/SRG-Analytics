@@ -325,7 +325,8 @@ class DataManager:
 
         return most_common[1], most_common[0]
 
-    def _most_mentioned_channels(self, guild_id, author_id)
+    def _most_mentioned_channels(self, guild_id, author_id):
+        pass
 
     def build_profile(self, guild_id: int, author_id: int):
         msgs = self.msg_count(guild_id, author_id)
@@ -372,3 +373,16 @@ class DataManager:
         msgs = self.cur.fetchone()[0]
 
         return msgs
+
+    def find_active_time(time_list):
+        #time in string format
+        hours = [t[0] for t in time_list]
+        freq = collections.Counter(hours)
+
+        rtn = freq.most_common(1)[0][0]
+        time_list = [t for t in time_list if t[0] == rtn]
+
+        average_time = sum([t[0] * 60 + t[1] for t in time_list])//len(time_list)
+        
+        return f"{average_time // 60}:{average_time % 60}"
+
