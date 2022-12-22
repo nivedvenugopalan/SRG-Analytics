@@ -92,6 +92,7 @@ class Commands(commands.Cog):
         embed.add_field(name="Times Mentioned", value=f"{profile.total_times_mentioned}", inline=True)
         embed.add_field(name="Most Mentioned by", value=f"<@{profile.most_mentioned_by_id}>", inline=True)
         embed.add_field(name="Times", value=f"{profile.most_mentioned_by_id_no}", inline=True)
+        embed.add_field(name="Most Active Channel", value=f"{profile.active_channel}", inline=True)
 
         await ctx.followup.send(embed=embed)
 

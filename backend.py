@@ -32,6 +32,7 @@ from colorlog import ColoredFormatter
 from textblob import TextBlob
 import mysql.connector
 import nltk
+import datetime
 
 intents = discord.Intents.all()
 
@@ -157,7 +158,7 @@ class Profile:
                  most_mentioned_channels: list,
                  total_mentions: int, most_mentioned_person_id: int, total_times_mentioned: int,
                  most_mentioned_by_id: int, most_mentioned_by_id_no: int,
-                 most_chatted_channel_id: int) -> None:
+                 active_channel: int) -> None:
         self.guildID = guild_id  # to be removed in the future
         self.ID = id_
 
@@ -175,7 +176,7 @@ class Profile:
         self.most_mentioned_by_id_no = most_mentioned_by_id_no
 
         # Channels
-        self.most_chatted_channel_id = most_chatted_channel_id
+        self.active_channel = active_channel
 
 
     def __dict__(self):
@@ -190,7 +191,8 @@ class Profile:
             "most_mentioned_person_id": self.most_mentioned_person_id,
             "total_times_mentioned": self.total_times_mentioned,
             "most_mentioned_by_id": self.most_mentioned_by_id,
-            "most_mentioned_by_id_no": self.most_mentioned_by_id_no
+            "most_mentioned_by_id_no": self.most_mentioned_by_id_no,
+            "active_channel":self.active_channel
         }
 
     def __str__(self):
@@ -339,6 +341,7 @@ class DataManager:
         pass
 
     def build_profile(self, guild_id: int, author_id: int):
+
         msgs = self.msg_count(guild_id, author_id)
         log.debug(f"Message Count: {msgs}")
 
@@ -348,6 +351,8 @@ class DataManager:
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
 
         msg_cache = self._get_all_messages(guild_id, author_id)
+        
+        active_channel = self.find_active_channel(author_id, guild_id)
 
         return Profile(
             guild_id,
@@ -360,7 +365,8 @@ class DataManager:
             mmp[0][0],
             mmp[0][1],
             tmmp[1],
-            tmmp[0]
+            tmmp[0],
+            active_channel
         )
 
     def top_server_messages(self, guild_id: int, n: int):
@@ -381,7 +387,6 @@ class DataManager:
         self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = '{author_id}';")
 
         msgs = self.cur.fetchone()[0]
-
         return msgs
 
     def most_chatted_channel_id(self, guild_id, author_id):
@@ -394,7 +399,7 @@ class DataManager:
         return list(freq.most_common(1)[0])[0]
 
     def find_active_time(time_list):
-        #time in string format
+        #time in tuple format
         hours = [t[0] for t in time_list]
         freq = collections.Counter(hours)
 
@@ -405,10 +410,17 @@ class DataManager:
         
         return f"{average_time // 60}:{average_time % 60}"
 
-    def to_unix_tuples(epochs):
+    def to_unix_tuples(self, epochs):
         tuples = []
         for epoch in epochs:
             datetime_ = datetime.fromtimestamp(epoch/1000)
             tuples.append((datetime_.hour, datetime_.minute))
         return tuples
+
+    def find_active_channel(self, user_id, guild_id):
+        self.cur.execute(f"SELECT channel_id FROM `{guild_id}` WHERE author_id = '{user_id}'")
+        msgs = [m[0] for m in self.cur.fetchall()]
+
+        freq = collections.Counter(msgs)
+        return freq.most_common(1)[0]
 
