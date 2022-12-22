@@ -156,7 +156,8 @@ class Profile:
     def __init__(self, guild_id: int, id_: int, no_of_messages: int, top_2_words: list, net_polarity: int,
                  most_mentioned_channels: list,
                  total_mentions: int, most_mentioned_person_id: int, total_times_mentioned: int,
-                 most_mentioned_by_id: int, most_mentioned_by_id_no: int) -> None:
+                 most_mentioned_by_id: int, most_mentioned_by_id_no: int,
+                 most_chatted_channel_id: int) -> None:
         self.guildID = guild_id  # to be removed in the future
         self.ID = id_
 
@@ -173,6 +174,10 @@ class Profile:
         self.most_mentioned_by_id = most_mentioned_by_id
         self.most_mentioned_by_id_no = most_mentioned_by_id_no
 
+        # Channels
+        self.most_chatted_channel_id = most_chatted_channel_id
+
+
     def __dict__(self):
         return {
             "guildID": self.guildID,
@@ -180,6 +185,7 @@ class Profile:
             "number_of_messages": self.no_of_messages,
             "top_2_words": self.top_2_words,
             "net_polarity": self.net_polarity,
+            "most_mentioned_channels": self.most_mentioned_channels,
             "total_mentions": self.total_mentions,
             "most_mentioned_person_id": self.most_mentioned_person_id,
             "total_times_mentioned": self.total_times_mentioned,
@@ -215,7 +221,9 @@ class DataManager:
                 msg_id BIGINT NOT NULL,
                 msg_content TEXT,
                 author_id BIGINT NOT NULL,
+                channel_id BIGINT NOT NULL,
                 epoch BIGINT NOT NULL,
+                attachments SMALLINT ,
                 ctx_id BIGINT,
                 mentions TEXT,
                 PRIMARY KEY (id)
@@ -327,6 +335,8 @@ class DataManager:
 
     def _most_mentioned_channels(self, guild_id, author_id):
         pass
+    def _most_mentioned_channels(self, guild_id, author_id):
+        pass
 
     def build_profile(self, guild_id: int, author_id: int):
         msgs = self.msg_count(guild_id, author_id)
@@ -374,6 +384,15 @@ class DataManager:
 
         return msgs
 
+    def most_chatted_channel_id(self, guild_id, author_id):
+        self.cur.execute(f"SELECT channel_id FROM `{guild_id}` WHERE author_id = '{author_id}'")
+
+        channels = self.cur.fetchall()
+
+        freq = collections.Counter(channels)
+
+        return list(freq.most_common(1)[0])[0]
+
     def find_active_time(time_list):
         #time in string format
         hours = [t[0] for t in time_list]
@@ -385,4 +404,11 @@ class DataManager:
         average_time = sum([t[0] * 60 + t[1] for t in time_list])//len(time_list)
         
         return f"{average_time // 60}:{average_time % 60}"
+
+    def to_unix_tuples(epochs):
+        tuples = []
+        for epoch in epochs:
+            datetime_ = datetime.fromtimestamp(epoch/1000)
+            tuples.append((datetime_.hour, datetime_.minute))
+        return tuples
 
