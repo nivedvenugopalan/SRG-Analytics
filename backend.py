@@ -26,6 +26,7 @@ import time
 import discord
 import logging
 import validators
+import itertools
 import collections
 from discord.ext import commands
 from colorlog import ColoredFormatter
@@ -33,6 +34,7 @@ from textblob import TextBlob
 import mysql.connector
 import nltk
 import datetime
+import ast
 
 intents = discord.Intents.all()
 
@@ -238,27 +240,21 @@ class DataManager:
     def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, channel_id, attachments: int = 0,
                  ctx_id: int = None, mentions: list = None) -> None:
 
-        sql = f"INSERT INTO `{guild_id}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+        sql = f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
         params = [msg_id, msg, author_id, channel_id, int(
             time.time()) * 1000, attachments, ctx_id, mentions]
 
         try:
-            self.cur.execute(
-                sql,
-                params
-            )
+            self.cur.execute(sql, params)
         except mysql.connector.errors.InterfaceError:
             self.add_guild(guild_id)
-            self.cur.execute(
-                sql,
-                params
-            )
+            self.cur.execute(sql, params)
 
         self.con.commit()
 
     def add_bulk_data(self, guild_id: int, data: list) -> None:
         self.cur.executemany(
-            f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+            f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES(?, ?, ?, ?, ?, ?, ?, ?);",
             data)
 
         self.con.commit()
@@ -302,26 +298,37 @@ class DataManager:
 
     def _total_mentions(self, guild_id: int, author_id: int):
         self.cur.execute(
-            f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL AND ctx_id IS NULL;")
-        messages = self.cur.fetchall()
-        mentions = 0
-        for msg in messages:
-            if list(msg)[0] is not None:
-                mentions += 1
+            f"SELECT mentions FROM `{str(guild_id)}` WHERE ctx_id IS NULL AND mentions IS NOT NULL;", )
+        nested_mentions = self.cur.fetchall()
 
-        return mentions
+        mentions = []
+        for mention in nested_mentions:
+            men_ = ast.literal_eval(mention[0])
+
+            if men_ is None:
+                continue
+
+            mentions.append(men_)
+        mentions = list(itertools.chain(*mentions))
+
+        freq = collections.Counter(mentions)
+
+        return freq[author_id]
 
     def _most_mentioned_person(self, guild_id: int, author_id: int):
         self.cur.execute(
             f"SELECT mentions FROM `{str(guild_id)}` WHERE author_id={author_id} AND ctx_id IS NULL AND mentions IS NOT NULL;", )
-        messages = self.cur.fetchall()
+        nested_mentions = self.cur.fetchall()
 
         mentions = []
-        for mention in messages:
-            if list(mention)[0] is not None:
-                lst = list(mention)[0].strip('][').split(', ')
-                for id_ in lst:
-                    mentions.append(int(id_))
+        for mention in nested_mentions:
+            men_ = ast.literal_eval(mention[0])
+
+            if men_ is None:
+                continue
+
+            mentions.append(men_)
+        mentions = list(itertools.chain(*mentions))
 
         freq = collections.Counter(mentions)
         return freq.most_common(1)
@@ -330,12 +337,9 @@ class DataManager:
         self.cur.execute(
             f"SELECT author_id FROM `{guild_id}` WHERE mentions LIKE '%{author_id}%' AND ctx_id IS NULL;")
         ids_ = self.cur.fetchall()
-        print(ids_)
 
         author_ids = [id_[0] for id_ in ids_]
-        print(author_ids)
         ctr = collections.Counter(author_ids)
-        print(ctr)
         most_common = ctr.most_common(1)[0]
 
         return most_common[1], most_common[0]
@@ -430,7 +434,7 @@ class DataManager:
     def find_active_channel(self, user_id, guild_id):
         self.cur.execute(
             f"SELECT channel_id FROM `{guild_id}` WHERE author_id = '{user_id}'")
-        msgs = [m[0] for m in self.cur.fetchall()]
+        channels = [m[0] for m in self.cur.fetchall()]
 
-        freq = collections.Counter(msgs)
-        return freq.most_common(1)[0]
+        freq = collections.Counter(channels)
+        return freq.most_common(1)[0][0]

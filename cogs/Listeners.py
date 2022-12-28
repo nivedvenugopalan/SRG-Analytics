@@ -25,9 +25,21 @@ class Listeners(commands.Cog):
         c = self.manager.msg_count(ctx.guild.id, ctx.author.id)
         log.debug(f"User Messages: {c}")
 
-        self.manager.add_data(ctx.guild.id, ctx.id, ctx.content, ctx.author.id,
-                              ctx.reference.message_id if ctx.reference else None,
-                              [mention.id for mention in ctx.mentions] if ctx.mentions != [] else None)
+        # self.manager.add_data(ctx.guild.id, ctx.id, ctx.content, ctx.author.id,
+        #                       ctx.reference.message_id if ctx.reference else None,
+        #                       [mention.id for mention in ctx.mentions] if ctx.mentions != [] else None)
+
+        self.manager.add_data(
+            guild_id=ctx.guild.id,
+            msg_id=ctx.id,
+            msg=ctx.content,
+            author_id=ctx.author.id,
+            channel_id=ctx.channel.id,
+            attachments=len(ctx.attachments),
+            ctx_id=ctx.channel_mentions[1].id if ctx.channel_mentions else None,
+            mentions=str([mention.id for mention in ctx.mentions]
+                         if ctx.mentions != [] else None)
+        )
 
         c = self.manager.msg_count(ctx.guild.id, ctx.author.id)
         log.debug(f"User Messages after commit: {c}")
