@@ -178,7 +178,6 @@ class Profile:
         # Channels
         self.active_channel = active_channel
 
-
     def __dict__(self):
         return {
             "guildID": self.guildID,
@@ -192,7 +191,7 @@ class Profile:
             "total_times_mentioned": self.total_times_mentioned,
             "most_mentioned_by_id": self.most_mentioned_by_id,
             "most_mentioned_by_id_no": self.most_mentioned_by_id_no,
-            "active_channel":self.active_channel
+            "active_channel": self.active_channel
         }
 
     def __str__(self):
@@ -240,7 +239,8 @@ class DataManager:
                  ctx_id: int = None, mentions: list = None) -> None:
 
         sql = f"INSERT INTO `{guild_id}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
-        params = [msg_id, msg, author_id, channel_id, int(time.time()) * 1000, attachments, ctx_id, mentions]
+        params = [msg_id, msg, author_id, channel_id, int(
+            time.time()) * 1000, attachments, ctx_id, mentions]
 
         try:
             self.cur.execute(
@@ -264,7 +264,8 @@ class DataManager:
         self.con.commit()
 
     def _get_all_messages(self, guild_id: int, author_id: int) -> list[str]:
-        self.cur.execute(f"SELECT msg_content FROM `{str(guild_id)}` WHERE author_id=?;", (author_id,))
+        self.cur.execute(
+            f"SELECT msg_content FROM `{str(guild_id)}` WHERE author_id=?;", (author_id,))
         messages = self.cur.fetchall()
 
         rtn = [str(msg[0].decode()) for msg in messages]
@@ -273,7 +274,8 @@ class DataManager:
         return rtn
 
     def _most_used_words(self, guild_id: int, author_id: int, n: int = 5, msg_cache=None) -> list[tuple[str, int]]:
-        messages = self._get_all_messages(guild_id, author_id) if msg_cache is None else msg_cache
+        messages = self._get_all_messages(
+            guild_id, author_id) if msg_cache is None else msg_cache
 
         words = process_messages(messages)
 
@@ -286,11 +288,13 @@ class DataManager:
         return rtn
 
     def _net_polarity(self, guild_id: int, author_id: int, msg_cache=None):
-        messages = self._get_all_messages(guild_id, author_id) if msg_cache is None else msg_cache
+        messages = self._get_all_messages(
+            guild_id, author_id) if msg_cache is None else msg_cache
         number_of_messages = len(messages)
         message = ".\n".join(messages)
 
-        polarity = round((TextBlob(message).sentiment.polarity / number_of_messages) * 10000, 4)
+        polarity = round(
+            (TextBlob(message).sentiment.polarity / number_of_messages) * 10000, 4)
 
         log.debug(polarity)
 
@@ -323,7 +327,8 @@ class DataManager:
         return freq.most_common(1)
 
     def _total_times_mentioned_and_by_who(self, guild_id: int, author_id: int):
-        self.cur.execute(f"SELECT author_id FROM `{guild_id}` WHERE mentions LIKE '%{author_id}%' AND ctx_id IS NULL;")
+        self.cur.execute(
+            f"SELECT author_id FROM `{guild_id}` WHERE mentions LIKE '%{author_id}%' AND ctx_id IS NULL;")
         ids_ = self.cur.fetchall()
         print(ids_)
 
@@ -337,6 +342,7 @@ class DataManager:
 
     def _most_mentioned_channels(self, guild_id, author_id):
         pass
+
     def _most_mentioned_channels(self, guild_id, author_id):
         pass
 
@@ -345,13 +351,14 @@ class DataManager:
         msgs = self.msg_count(guild_id, author_id)
         log.debug(f"Message Count: {msgs}")
 
-        most_mentioned_channels = self._most_mentioned_channels(guild_id, author_id)
+        most_mentioned_channels = self._most_mentioned_channels(
+            guild_id, author_id)
 
         mmp = self._most_mentioned_person(guild_id, author_id)
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
 
         msg_cache = self._get_all_messages(guild_id, author_id)
-        
+
         active_channel = self.find_active_channel(author_id, guild_id)
 
         return Profile(
@@ -384,13 +391,15 @@ class DataManager:
         return rtn
 
     def msg_count(self, guild_id, author_id):
-        self.cur.execute(f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = '{author_id}';")
+        self.cur.execute(
+            f"SELECT COUNT(author_id) FROM `{guild_id}` WHERE author_id = '{author_id}';")
 
         msgs = self.cur.fetchone()[0]
         return msgs
 
     def most_chatted_channel_id(self, guild_id, author_id):
-        self.cur.execute(f"SELECT channel_id FROM `{guild_id}` WHERE author_id = '{author_id}'")
+        self.cur.execute(
+            f"SELECT channel_id FROM `{guild_id}` WHERE author_id = '{author_id}'")
 
         channels = self.cur.fetchall()
 
@@ -399,15 +408,16 @@ class DataManager:
         return list(freq.most_common(1)[0])[0]
 
     def find_active_time(time_list):
-        #time in tuple format
+        # time in tuple format
         hours = [t[0] for t in time_list]
         freq = collections.Counter(hours)
 
         rtn = freq.most_common(1)[0][0]
         time_list = [t for t in time_list if t[0] == rtn]
 
-        average_time = sum([t[0] * 60 + t[1] for t in time_list])//len(time_list)
-        
+        average_time = sum([t[0] * 60 + t[1]
+                           for t in time_list])//len(time_list)
+
         return f"{average_time // 60}:{average_time % 60}"
 
     def to_unix_tuples(self, epochs):
@@ -418,9 +428,9 @@ class DataManager:
         return tuples
 
     def find_active_channel(self, user_id, guild_id):
-        self.cur.execute(f"SELECT channel_id FROM `{guild_id}` WHERE author_id = '{user_id}'")
+        self.cur.execute(
+            f"SELECT channel_id FROM `{guild_id}` WHERE author_id = '{user_id}'")
         msgs = [m[0] for m in self.cur.fetchall()]
 
         freq = collections.Counter(msgs)
         return freq.most_common(1)[0]
-

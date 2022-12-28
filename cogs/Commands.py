@@ -64,7 +64,8 @@ class Commands(commands.Cog):
             self.manager.add_bulk_data(guild.id, data_list[channel])
 
         await ctx.followup.send("Harvested data from the guild.")
-        log.info(f"Harvested data from guild {guild.id} in {time.time() - start_time} seconds.")
+        log.info(
+            f"Harvested data from guild {guild.id} in {time.time() - start_time} seconds.")
 
     @commands.slash_command(name="profile", description="Shows your profile.")
     async def profile(self, ctx, user: discord.Member = None):
@@ -82,17 +83,26 @@ class Commands(commands.Cog):
         print("\n\n\n")
         print(profile)
 
-        embed = discord.Embed(title=f"{user.name}'s Profile", color=discord.Color.blurple())
+        embed = discord.Embed(
+            title=f"{user.name}'s Profile", color=discord.Color.blurple())
         embed.add_field(name="Guild ID", value=f"{ctx.guild.id}", inline=True)
         embed.add_field(name="User ID", value=f"{user.id}", inline=True)
-        embed.add_field(name="Messages", value=f"{profile.no_of_messages}", inline=False)
-        embed.add_field(name="Top 5 Words", value=", ".join([f"`{w[0]}`" for w in profile.top_2_words]), inline=True)
-        embed.add_field(name="Total Mentions", value=f"{profile.total_mentions}", inline=False)
-        embed.add_field(name="Most Mentioned User", value=f"<@{profile.most_mentioned_person_id}>", inline=True)
-        embed.add_field(name="Times Mentioned", value=f"{profile.total_times_mentioned}", inline=True)
-        embed.add_field(name="Most Mentioned by", value=f"<@{profile.most_mentioned_by_id}>", inline=True)
-        embed.add_field(name="Times", value=f"{profile.most_mentioned_by_id_no}", inline=True)
-        embed.add_field(name="Most Active Channel", value=f"{profile.active_channel}", inline=True)
+        embed.add_field(name="Messages",
+                        value=f"{profile.no_of_messages}", inline=False)
+        embed.add_field(name="Top 5 Words", value=", ".join(
+            [f"`{w[0]}`" for w in profile.top_2_words]), inline=True)
+        embed.add_field(name="Total Mentions",
+                        value=f"{profile.total_mentions}", inline=False)
+        embed.add_field(name="Most Mentioned User",
+                        value=f"<@{profile.most_mentioned_person_id}>", inline=True)
+        embed.add_field(name="Times Mentioned",
+                        value=f"{profile.total_times_mentioned}", inline=True)
+        embed.add_field(name="Most Mentioned by",
+                        value=f"<@{profile.most_mentioned_by_id}>", inline=True)
+        embed.add_field(
+            name="Times", value=f"{profile.most_mentioned_by_id_no}", inline=True)
+        embed.add_field(name="Most Active Channel",
+                        value=f"{profile.active_channel}", inline=True)
 
         await ctx.followup.send(embed=embed)
 
@@ -113,7 +123,8 @@ class Commands(commands.Cog):
         data = self.manager.cur.fetchall()
 
         # create an embed
-        embed = discord.Embed(title=f"Top 10 Users in {ctx.guild.name}", color=0x00ff00)
+        embed = discord.Embed(
+            title=f"Top 10 Users in {ctx.guild.name}", color=0x00ff00)
 
         # iterate through the data
         for i in range(len(data)):
@@ -123,18 +134,18 @@ class Commands(commands.Cog):
 
         await ctx.followup.send(embed=embed)
 
-
     @commands.slash_command(name="topchannel", description="Shows the help menu.")
     async def topchannel(self, ctx):
         self.manager = DataManager()
-        self.manager.cur.execute(f"SELECT channel_id, COUNT(channel_id) FROM `{ctx.guild.id}` LIMIT 5 ORDER BY COUNT(channel_id) DESC")
+        self.manager.cur.execute(
+            f"SELECT channel_id, COUNT(channel_id) FROM `{ctx.guild.id}` LIMIT 5 ORDER BY COUNT(channel_id) DESC")
         data = self.manager.cur.fetchall()
-        embed = discord.Embed(title=f"Top 5 Channels in {ctx.guild.name}", color=0x00ff00)
+        embed = discord.Embed(
+            title=f"Top 5 Channels in {ctx.guild.name}", color=0x00ff00)
         for i in range(len(data)):
             embed.add_field(name=f"{i + 1}. {data[i][1]}",
                             value=f"<#{data[i][0]}>", inline=False)
         await ctx.followup.send(embed=embed)
-
 
     @commands.slash_command(name="topword", description="Shows the top word used in the guild.")
     async def topword(self, ctx):

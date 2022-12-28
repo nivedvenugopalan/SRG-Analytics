@@ -37,4 +37,3 @@ class Listeners(commands.Cog):
 
 def setup(client):
     client.add_cog(Listeners(client))
-
