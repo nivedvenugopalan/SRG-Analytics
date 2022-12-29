@@ -269,7 +269,7 @@ class DataManager:
         log.debug(rtn[:10])
         return rtn
 
-    def _most_used_words(self, guild_id: int, author_id: int, n: int = 5, msg_cache=None) -> list[tuple[str, int]]:
+    def most_used_words(self, guild_id: int, author_id: int, n: int = 5, msg_cache=None) -> list[tuple[str, int]]:
         messages = self._get_all_messages(
             guild_id, author_id) if msg_cache is None else msg_cache
 
@@ -369,7 +369,7 @@ class DataManager:
             guild_id,
             author_id,
             msgs,
-            self._most_used_words(guild_id, author_id, 5, msg_cache=msg_cache),
+            self.most_used_words(guild_id, author_id, 5, msg_cache=msg_cache),
             self._net_polarity(guild_id, author_id, msg_cache=msg_cache),
             most_mentioned_channels,
             self._total_mentions(guild_id, author_id),
@@ -438,3 +438,15 @@ class DataManager:
 
         freq = collections.Counter(channels)
         return freq.most_common(1)[0][0]
+
+class RankManager:
+    def __init__(self):
+        #connect to db
+        ...
+
+    def sync(self):
+        pass
+
+
+    
+

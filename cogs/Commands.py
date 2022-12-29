@@ -147,9 +147,18 @@ class Commands(commands.Cog):
                             value=f"<#{data[i][0]}>", inline=False)
         await ctx.followup.send(embed=embed)
 
-    @commands.slash_command(name="topword", description="Shows the top word used in the guild.")
-    async def topword(self, ctx):
-        pass
+    @commands.slash_command(name="topwords", description="Shows the top word said by the user in a guild.")
+    async def topwords(self, ctx):
+        words = Profile.most_user_words(ctx.author.id, ctx.guild.id, n=20)
+        embed = discord.Embed(
+            title=f"Top 20 words said by {ctx.author.name}", color=0x00ff00)
+        
+        for i, word in enumerate(words, start=1):
+            embed.add_field(name=f"{i}. {word[0]}", value=f"({word[1]})", inline=False)
+
+        await ctx.followup.send(embed=embed)     
+        
+
 
 
 # The `setup` function is required for the cog to work
