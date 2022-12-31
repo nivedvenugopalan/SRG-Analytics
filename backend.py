@@ -237,16 +237,15 @@ class DataManager:
 
         log.info(f"Created table for guild {guild_id}")
 
-    def add_data(self, guild_id: int, msg_id: int, msg: str, author_id: int, channel_id, attachments: int = 0,
+    def add_data(self, guild_id: int, msg_id: int, epoch: int, msg: str, author_id: int, channel_id, attachments: int = 0,
                  ctx_id: int = None, mentions: list = None) -> None:
 
         sql = f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
-        params = [msg_id, msg, author_id, channel_id, int(
-            time.time()) * 1000, attachments, ctx_id, mentions]
+        params = [msg_id, msg, author_id, channel_id, epoch, attachments, ctx_id, str(mentions)]
 
         try:
             self.cur.execute(sql, params)
-        except mysql.connector.errors.InterfaceError:
+        except:
             self.add_guild(guild_id)
             self.cur.execute(sql, params)
 
