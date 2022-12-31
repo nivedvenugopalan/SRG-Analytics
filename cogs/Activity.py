@@ -85,6 +85,9 @@ class Activity(commands.Cog):
                 current_time = datetime.datetime.now()
                 interval_days = (current_time-first_msg_time).days
 
+                if interval_days == 0:
+                    interval_days = 1
+
                 data[i] = (
                     data[i][0], [x/interval_days for x in list(data[i][1])])
 
@@ -194,6 +197,9 @@ class Activity(commands.Cog):
                 current_time = datetime.datetime.now()
                 interval_months = (
                     current_time-first_msg_time).days / 30.436875
+
+                if interval_days == 0:
+                    interval_days = 1
 
                 data[i] = (
                     data[i][0], [x/interval_months for x in list(data[i][1])])
