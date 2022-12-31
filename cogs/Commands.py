@@ -266,7 +266,7 @@ class Commands(commands.Cog):
         epochs = [list(epoch)[0] for epoch in epochs if epoch != []]
 
         # iterate over the list of epochs
-        month_counts = {i: 0 for i in range(11)}
+        month_counts = {i: 0 for i in range(1, 13)}
         # iterate over the epochs in each sublist
         for epoch in epochs:
             # convert the epoch to a datetime object
@@ -288,7 +288,7 @@ class Commands(commands.Cog):
 
         ticks = [i for i in range(12)]
         tick_labels = [datetime.datetime(
-            2022, i, 1).strftime('%B') for i in range(1, 13)]
+            2022, i, 1).strftime('%b') for i in range(1, 13)]
 
         # set the tick locations and labels
         axs.set_xticks(ticks)
