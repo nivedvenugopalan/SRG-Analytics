@@ -106,11 +106,13 @@ class Activity(commands.Cog):
 
         # add labels and grid
         axs.set_xlabel('Hour')
-        axs.set_ylabel('Number of Messages')
+        axs.set_ylabel(
+            'Number of Messages' if average is False else 'Average Number of Messages')
         axs.grid(True)
 
         # add a title
-        axs.set_title('Hourly Member Activity')
+        axs.set_title(
+            'Hourly Member Activity' if average is False else 'Average Hourly Member Activity')
         axs.legend()
         fig.tight_layout()
 
@@ -215,11 +217,13 @@ class Activity(commands.Cog):
 
         # add labels and grid
         axs.set_xlabel('Month')
-        axs.set_ylabel('Number of Messages')
+        axs.set_ylabel(
+            'Number of Messages' if average is False else 'Average Number of Messages')
         axs.grid(True)
 
         # add a title
-        axs.set_title('Monthly Member Activity')
+        axs.set_title(
+            'Monthly Member Activity' if average is False else 'Average Monthly Member Activity')
         axs.legend()
         fig.tight_layout()
 
@@ -319,6 +323,13 @@ class Activity(commands.Cog):
 
         # close the figure
         plt.close(fig)
+
+    @hourly_activity.command(
+        name="server",
+        description="Shows the activity of a guild on a per hour basis."
+    )
+    async def server_hourly_activeness(self, ctx):
+        pass  # TODO
 
 
 def setup(client):
