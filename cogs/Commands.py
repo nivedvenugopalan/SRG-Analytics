@@ -38,7 +38,8 @@ class Commands(commands.Cog):
 
                 data_list[channel.name].append([
                     message.id, message.content, message.author.id, message.channel.id,
-                    int(message.created_at.timestamp()) + 3 * 60 * 60, len(message.attachments),
+                    int(message.created_at.timestamp()) +
+                    3 * 60 * 60, len(message.attachments),
                     message.reference.message_id if message.reference
                     else None, str([mention.id for mention in message.mentions]) if message.mentions != [] else None
                 ])
@@ -86,7 +87,8 @@ class Commands(commands.Cog):
 
         profile = self.manager.build_profile(ctx.guild.id, user.id)
 
-        embed = discord.Embed(title=f"{user.name}'s Profile", color=discord.Color.blurple())
+        embed = discord.Embed(
+            title=f"{user.name}'s Profile", color=discord.Color.blurple())
         embed.add_field(name="Guild ID", value=f"{ctx.guild.id}", inline=True)
         embed.add_field(name="User ID", value=f"{user.id}", inline=True)
         embed.add_field(name="Messages",
@@ -156,7 +158,8 @@ class Commands(commands.Cog):
             title=f"Top 20 words said by {ctx.author.name}", color=0x00ff00)
 
         for i, word in enumerate(words, start=1):
-            embed.add_field(name=f"{i}. {word[0]}", value=f"({word[1]})", inline=False)
+            embed.add_field(
+                name=f"{i}. {word[0]}", value=f"({word[1]})", inline=False)
 
         await ctx.followup.send(embed=embed)
 
@@ -172,7 +175,8 @@ class Commands(commands.Cog):
         for user in [user_1, user_2, user_3, user_4]:
             if user is None:
                 continue
-            manager.cur.execute(f"SELECT epoch FROM `{ctx.guild.id}` WHERE `author_id` = ?", (user.id,))
+            manager.cur.execute(
+                f"SELECT epoch FROM `{ctx.guild.id}` WHERE `author_id` = ?", (user.id,))
             epochs.append(list(manager.cur.fetchall()))
 
         epochs = [epoch for epoch in epochs if epoch != []]
@@ -196,14 +200,14 @@ class Commands(commands.Cog):
                     hour_counts[hour] += 1
                 else:
                     hour_counts[hour] = 1
-                print(epoch, hour)
             # extract the hours and counts as separate lists
             hours = list(hour_counts.keys())
             counts = list(hour_counts.values())
             # store the data for this sublist
             data.append((hours, counts))
 
-        sublist_names = [f"{user.name}" for user in [user_1, user_2, user_3, user_4] if user is not None]
+        sublist_names = [f"{user.name}" for user in [
+            user_1, user_2, user_3, user_4] if user is not None]
 
         t = [i for i in range(24)]
 
@@ -236,13 +240,99 @@ class Commands(commands.Cog):
         with io.BytesIO() as image_binary:
             fig.savefig(image_binary, format='png')
             image_binary.seek(0)
-            embed = discord.Embed(title="Number of Occurrences by Hour", color=0x00ff00)
+            embed = discord.Embed(
+                title="Number of Occurrences by Hour", color=0x00ff00)
             embed.set_image(url="attachment://image.png")
             await ctx.followup.send(embed=embed, file=discord.File(fp=image_binary, filename="image.png"))
 
         # close the figure
         plt.close(fig)
 
+    @commands.slash_command(name="member_activeness_per_month",
+                            description="Shows the months where a member was active in a guild.")
+    async def member_activeness_per_month(self, ctx, user_1: discord.User, user_2: discord.User = None,
+                                          user_3: discord.User = None,
+                                          user_4: discord.User = None):
+        await ctx.defer()
+        manager = DataManager()
+        epochs = []
+
+        for user in [user_1, user_2, user_3, user_4]:
+            if user is None:
+                continue
+            manager.cur.execute(
+                f"SELECT epoch FROM `{ctx.guild.id}` WHERE `author_id` = ?", (user.id,))
+            epochs.append(list(manager.cur.fetchall()))
+
+        epochs = [epoch for epoch in epochs if epoch != []]
+        tz = pytz.timezone('Asia/Riyadh')
+
+        fig, axs = plt.subplots(1, 1)
+        data = []
+
+        # iterate over the list of epochs
+        for epoch_list in epochs:
+            # create a dictionary to store the counts for each month
+            month_counts = {i: 0 for i in range(1, 13)}
+            # iterate over the epochs in each sublist
+            for epoch in epoch_list:
+                # convert the epoch to a datetime object
+                dt = datetime.datetime.fromtimestamp(epoch[0], tz=tz)
+                # extract the month from the datetime object
+                month = dt.month
+                # increment the count for this month in the dictionary
+                if month in month_counts:
+                    month_counts[month] += 1
+                else:
+                    month_counts[month] = 1
+            # extract the months and counts as separate lists
+            months = list(month_counts.keys())
+            counts = list(month_counts.values())
+            # store the data for this sublist
+            data.append((months, counts))
+
+        sublist_names = [f"{user.name}" for user in [
+            user_1, user_2, user_3, user_4] if user is not None]
+
+        t = [i for i in range(1, 13)]
+
+        # plot the data
+        for i, (months, counts) in enumerate(data):
+            axs.plot(t, counts, '-o', label=sublist_names[i])
+
+        ticks = [i for i in range(1, 13)]
+        tick_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May',
+                       'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+        # set the tick locations and labels
+        axs.set_xticks(ticks)
+        axs.set_xticklabels(tick_labels)
+
+        # add labels and grid
+        axs.set_xlabel('Month')
+        axs.set_ylabel('Number of Occurrences')
+        axs.grid(True)
+
+        # add a title
+        axs.set_title('Number of Occurrences by Month')
+
+        # show a legend
+        axs.legend()
+
+        # adjust the layout
+        fig.tight_layout()
+
+        # save the graph as a virtual file and send it
+        with io.BytesIO() as image_binary:
+            fig.savefig(image_binary, format='png')
+            image_binary.seek(0)
+            embed = discord.Embed(
+                title="Number of Occurrences by Month", color=0x00ff00)
+            embed.set_image(url="attachment://image.png")
+            await ctx.followup.send(embed=embed, file=discord.File(fp=image_binary, filename="image.png"))
+
+        # close the figure
+        plt.close(fig)
 
 
 # The `setup` function is required for the cog to work
