@@ -266,7 +266,7 @@ class Commands(commands.Cog):
         epochs = [epoch[0] for epoch in epochs if epoch != []]
 
         # iterate over the list of epochs
-        hour_counts = {i: 0 for i in range(24)}
+        month_counts = {i: 0 for i in range(12)}
         # iterate over the epochs in each sublist
         for epoch in epochs:
             # convert the epoch to a datetime object
@@ -274,12 +274,12 @@ class Commands(commands.Cog):
             # extract the hour from the datetime object
             month = dt.month
             # increment the count for this hour in the dictionary
-            if month in hour_counts:
-                hour_counts[month] += 1
+            if month in month_counts:
+                month_counts[month] += 1
             else:
-                hour_counts[month] = 1
+                month_counts[month] = 1
         # extract the hours and counts as separate lists
-        counts = list(hour_counts.values())
+        counts = list(month_counts.values())
         # store the data for this sublist
 
         t = [i for i in range(24)]
@@ -287,8 +287,8 @@ class Commands(commands.Cog):
         # plot the data
         axs.plot(t, counts, '-o')
 
-        ticks = [i for i in range(24)]
-        tick_labels = [str(i) for i in range(24)]
+        ticks = [i for i in range(12)]
+        tick_labels = [str(i) for i in range(12)]
 
         # set the tick locations and labels
         axs.set_xticks(ticks)
