@@ -14,8 +14,10 @@ class Activity(commands.Cog):
 
     activity = discord.SlashCommandGroup("activity", "Activity commands")
 
-    monthly_activity = activity.create_subgroup("monthly", "Monthly activity commands")
-    hourly_activity = activity.create_subgroup("daily", "Daily activity commands")
+    monthly_activity = activity.create_subgroup(
+        "monthly", "Monthly activity commands")
+    hourly_activity = activity.create_subgroup(
+        "daily", "Daily activity commands")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -32,15 +34,16 @@ class Activity(commands.Cog):
             user_2: discord.User = None,
             user_3: discord.User = None,
             user_4: discord.User = None,
-            user_5: discord.User = None
+            user_5: discord.User = None,
+            average: bool = False
     ):
         await ctx.defer()
         manager = DataManager()
         epochs = []
 
-        for user in [user_1, user_2, user_3, user_4, user_5]:
-            if user is None:
-                continue
+        users = [x for x in [user_1, user_2, user_3,
+                             user_4, user_5] if not x is None]
+        for user in users:
             manager.cur.execute(
                 f"SELECT epoch FROM `{ctx.guild.id}` WHERE `author_id` = ?", (user.id,))
             epochs.append(list(manager.cur.fetchall()))
@@ -50,6 +53,9 @@ class Activity(commands.Cog):
 
         fig, axs = plt.subplots(1, 1)
         data = []
+
+        epochs = [sorted(epoch_list, key=lambda x: x[0])
+                  for epoch_list in epochs]
 
         # iterate over the list of epochs
         for epoch_list in epochs:
@@ -72,7 +78,17 @@ class Activity(commands.Cog):
             # store the data for this sublist
             data.append((hours, counts))
 
-        sublist_names = [f"{user.name}" for user in [
+        if average is True:
+            for i in range(len(users)):
+                first_msg_time = datetime.datetime.fromtimestamp(
+                    epochs[i][0][0])
+                current_time = datetime.datetime.now()
+                interval_days = (current_time-first_msg_time).days
+
+                data[i] = (
+                    data[i][0], [x/interval_days for x in list(data[i][1])])
+
+        sublist_names = [f"{user.display_name}" for user in [
             user_1, user_2, user_3, user_4, user_5] if user is not None]
 
         t = [i for i in range(24)]
@@ -125,15 +141,16 @@ class Activity(commands.Cog):
             user_2: discord.User = None,
             user_3: discord.User = None,
             user_4: discord.User = None,
-            user_5: discord.User = None
+            user_5: discord.User = None,
+            average: bool = False
     ):
         await ctx.defer()
         manager = DataManager()
         epochs = []
 
-        for user in [user_1, user_2, user_3, user_4, user_5]:
-            if user is None:
-                continue
+        users = [x for x in [user_1, user_2, user_3,
+                             user_4, user_5] if not x is None]
+        for user in users:
             manager.cur.execute(
                 f"SELECT epoch FROM `{ctx.guild.id}` WHERE `author_id` = ?", (user.id,))
             epochs.append(list(manager.cur.fetchall()))
@@ -143,6 +160,9 @@ class Activity(commands.Cog):
 
         fig, axs = plt.subplots(1, 1)
         data = []
+
+        epochs = [sorted(epoch_list, key=lambda x: x[0])
+                  for epoch_list in epochs]
 
         # iterate over the list of epochs
         for epoch_list in epochs:
@@ -165,7 +185,18 @@ class Activity(commands.Cog):
             # store the data for this sublist
             data.append((months, counts))
 
-        sublist_names = [f"{user.name}" for user in [
+        if average is True:
+            for i in range(len(users)):
+                first_msg_time = datetime.datetime.fromtimestamp(
+                    epochs[i][0][0])
+                current_time = datetime.datetime.now()
+                interval_months = (
+                    current_time-first_msg_time).days / 30.436875
+
+                data[i] = (
+                    data[i][0], [x/interval_months for x in list(data[i][1])])
+
+        sublist_names = [f"{user.display_name}" for user in [
             user_1, user_2, user_3, user_4, user_5] if user is not None]
 
         t = [i for i in range(1, 13)]
@@ -234,6 +265,8 @@ class Activity(commands.Cog):
         fig, axs = plt.subplots(1, 1)
 
         epochs = [list(epoch)[0] for epoch in epochs if epoch != []]
+        epochs = [sorted(epoch_list, key=lambda x: x[0])
+                  for epoch_list in epochs]
 
         # iterate over the list of epochs
         month_counts = {i: 0 for i in range(1, 13)}
