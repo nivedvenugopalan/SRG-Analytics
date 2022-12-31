@@ -256,15 +256,17 @@ class Commands(commands.Cog):
 
         manager.cur.execute(f"SELECT epoch FROM `{ctx.guild.id}`", )
         epochs.append(list(manager.cur.fetchall()))
+        epochs = epochs[0]
+        print(len(epochs))
 
         tz = pytz.timezone('Asia/Riyadh')
 
         fig, axs = plt.subplots(1, 1)
 
-        epochs = [epoch[0] for epoch in epochs if epoch != []]
+        epochs = [list(epoch)[0] for epoch in epochs if epoch != []]
 
         # iterate over the list of epochs
-        month_counts = {i: 0 for i in range(12)}
+        month_counts = {i: 0 for i in range(11)}
         # iterate over the epochs in each sublist
         for epoch in epochs:
             # convert the epoch to a datetime object
@@ -279,7 +281,7 @@ class Commands(commands.Cog):
         # extract the months and counts as separate lists
         counts = list(month_counts.values())
 
-        t = [i for i in range(12)]
+        t = [i for i in range(len(counts))]
 
         # plot the data
         axs.plot(t, counts, '-o')
