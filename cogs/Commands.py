@@ -1,4 +1,9 @@
+import io
+import random
+
 import discord.ext.commands
+import pytz as pytz
+import matplotlib.pyplot as plt
 from backend import *
 
 
@@ -33,7 +38,8 @@ class Commands(commands.Cog):
 
                 data_list[channel.name].append([
                     message.id, message.content, message.author.id, message.channel.id,
-                    message.created_at, len(message.attachments), message.reference.message_id if message.reference
+                    int(message.created_at.timestamp()) + 3 * 60 * 60, len(message.attachments),
+                    message.reference.message_id if message.reference
                     else None, str([mention.id for mention in message.mentions]) if message.mentions != [] else None
                 ])
                 self.count += 1
@@ -80,11 +86,7 @@ class Commands(commands.Cog):
 
         profile = self.manager.build_profile(ctx.guild.id, user.id)
 
-        print("\n\n\n")
-        print(profile)
-
-        embed = discord.Embed(
-            title=f"{user.name}'s Profile", color=discord.Color.blurple())
+        embed = discord.Embed(title=f"{user.name}'s Profile", color=discord.Color.blurple())
         embed.add_field(name="Guild ID", value=f"{ctx.guild.id}", inline=True)
         embed.add_field(name="User ID", value=f"{user.id}", inline=True)
         embed.add_field(name="Messages",
@@ -182,7 +184,7 @@ class Commands(commands.Cog):
         # iterate over the list of epochs
         for epoch_list in epochs:
             # create a dictionary to store the counts for each hour
-            hour_counts = {}
+            hour_counts = {i: 0 for i in range(23)}
             # iterate over the epochs in each sublist
             for epoch in epoch_list:
                 # convert the epoch to a datetime object
