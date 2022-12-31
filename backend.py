@@ -22,7 +22,6 @@
 
 import configparser
 import sys
-import time
 import discord
 import logging
 import validators
@@ -237,7 +236,8 @@ class DataManager:
 
         log.info(f"Created table for guild {guild_id}")
 
-    def add_data(self, guild_id: int, msg_id: int, epoch: int, msg: str, author_id: int, channel_id, attachments: int = 0,
+    def add_data(self, guild_id: int, msg_id: int, epoch: int, msg: str, author_id: int, channel_id,
+                 attachments: int = 0,
                  ctx_id: int = None, mentions: list = None) -> None:
 
         sql = f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
@@ -346,16 +346,12 @@ class DataManager:
     def _most_mentioned_channels(self, guild_id, author_id):
         pass
 
-    def _most_mentioned_channels(self, guild_id, author_id):
-        pass
-
-    def build_profile(self, guild_id: int, author_id: int):
+    def build_profile(self, guild_id: int, author_id: int) -> Profile:
 
         msgs = self.msg_count(guild_id, author_id)
         log.debug(f"Message Count: {msgs}")
 
-        most_mentioned_channels = self._most_mentioned_channels(
-            guild_id, author_id)
+        most_mentioned_channels = self._most_mentioned_channels(guild_id, author_id)
 
         mmp = self._most_mentioned_person(guild_id, author_id)
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
@@ -419,14 +415,14 @@ class DataManager:
         time_list = [t for t in time_list if t[0] == rtn]
 
         average_time = sum([t[0] * 60 + t[1]
-                           for t in time_list])//len(time_list)
+                            for t in time_list]) // len(time_list)
 
         return f"{average_time // 60}:{average_time % 60}"
 
     def to_unix_tuples(self, epochs):
         tuples = []
         for epoch in epochs:
-            datetime_ = datetime.fromtimestamp(epoch/1000)
+            datetime_ = datetime.fromtimestamp(epoch / 1000)
             tuples.append((datetime_.hour, datetime_.minute))
         return tuples
 
@@ -438,14 +434,28 @@ class DataManager:
         freq = collections.Counter(channels)
         return freq.most_common(1)[0][0]
 
+
 class RankManager:
     def __init__(self):
-        #connect to db
+        # connect to db
         ...
 
     def sync(self):
         pass
 
 
-    
+_embed_template = discord.Embed(
+    title="SRG Analytics",
+    colour=embed_color,
+    url=embed_url
+)
+_error_template = discord.Embed(
+    title="SRG Analytics",
+    colour=discord.Colour.red(),
+    url=embed_url
+)
+_error_template.set_footer(text=embed_footer)
+_embed_template.set_footer(text=embed_footer)
 
+embed_template = lambda: _embed_template.copy()
+error_template = lambda: _error_template.copy()
