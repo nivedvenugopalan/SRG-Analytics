@@ -241,7 +241,7 @@ class Commands(commands.Cog):
             fig.savefig(image_binary, format='png')
             image_binary.seek(0)
             embed = discord.Embed(
-                title="Number of Occurrences by Hour", color=0x00ff00)
+                title="Member activeness per hour", color=0x00ff00)
             embed.set_image(url="attachment://image.png")
             await ctx.followup.send(embed=embed, file=discord.File(fp=image_binary, filename="image.png"))
 
@@ -309,7 +309,7 @@ class Commands(commands.Cog):
             fig.savefig(image_binary, format='png')
             image_binary.seek(0)
             embed = discord.Embed(
-                title="Number of Occurrences by Month", color=0x00ff00)
+                title="Server activeness per month", color=discord.Color.blue())
             embed.set_image(url="attachment://image.png")
             await ctx.followup.send(embed=embed, file=discord.File(fp=image_binary, filename="image.png"))
 
@@ -382,7 +382,7 @@ class Commands(commands.Cog):
         axs.grid(True)
 
         # add a title
-        axs.set_title('Number of Occurrences by Month')
+        axs.set_title('Member Activeness per Month')
 
         # show a legend
         axs.legend()
@@ -395,7 +395,7 @@ class Commands(commands.Cog):
             fig.savefig(image_binary, format='png')
             image_binary.seek(0)
             embed = discord.Embed(
-                title="Number of Occurrences by Month", color=0x00ff00)
+                title="Number of Occurrences by Month", color=discord.Color.blue())
             embed.set_image(url="attachment://image.png")
             await ctx.followup.send(embed=embed, file=discord.File(fp=image_binary, filename="image.png"))
 
