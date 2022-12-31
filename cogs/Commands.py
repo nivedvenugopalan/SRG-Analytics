@@ -257,7 +257,6 @@ class Commands(commands.Cog):
         manager.cur.execute(f"SELECT epoch FROM `{ctx.guild.id}`", )
         epochs.append(list(manager.cur.fetchall()))
         epochs = epochs[0]
-        print(len(epochs))
 
         tz = pytz.timezone('Asia/Riyadh')
 
@@ -310,7 +309,7 @@ class Commands(commands.Cog):
             fig.savefig(image_binary, format='png')
             image_binary.seek(0)
             embed = discord.Embed(
-                title="Number of Occurrences by Hour", color=0x00ff00)
+                title="Number of Occurrences by Month", color=0x00ff00)
             embed.set_image(url="attachment://image.png")
             await ctx.followup.send(embed=embed, file=discord.File(fp=image_binary, filename="image.png"))
 
