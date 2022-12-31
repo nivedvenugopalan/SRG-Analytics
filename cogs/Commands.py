@@ -248,8 +248,6 @@ class Commands(commands.Cog):
         # close the figure
         plt.close(fig)
 
-
-
     @commands.slash_command(name="server_activeness", description="")
     async def server_activeness(self, ctx):
         await ctx.defer()
@@ -270,25 +268,25 @@ class Commands(commands.Cog):
         # iterate over the epochs in each sublist
         for epoch in epochs:
             # convert the epoch to a datetime object
-            dt = datetime.datetime.fromtimestamp(epoch[0], tz=tz)
-            # extract the hour from the datetime object
+            dt = datetime.datetime.fromtimestamp(epoch, tz=tz)
+            # extract the month from the datetime object
             month = dt.month
-            # increment the count for this hour in the dictionary
+            # increment the count for this month in the dictionary
             if month in month_counts:
                 month_counts[month] += 1
             else:
                 month_counts[month] = 1
-        # extract the hours and counts as separate lists
+        # extract the months and counts as separate lists
         counts = list(month_counts.values())
-        # store the data for this sublist
 
-        t = [i for i in range(24)]
+        t = [i for i in range(12)]
 
         # plot the data
         axs.plot(t, counts, '-o')
 
         ticks = [i for i in range(12)]
-        tick_labels = [str(i) for i in range(12)]
+        tick_labels = [datetime.datetime(
+            2022, i, 1).strftime('%B') for i in range(1, 13)]
 
         # set the tick locations and labels
         axs.set_xticks(ticks)
@@ -300,10 +298,7 @@ class Commands(commands.Cog):
         axs.grid(True)
 
         # add a title
-        axs.set_title('Number of Occurrences by Hour')
-
-        # show a legend
-        # axs.legend()
+        axs.set_title('Number of Occurrences by Month')
 
         # adjust the layout
         fig.tight_layout()
@@ -312,7 +307,8 @@ class Commands(commands.Cog):
         with io.BytesIO() as image_binary:
             fig.savefig(image_binary, format='png')
             image_binary.seek(0)
-            embed = discord.Embed(title="Number of Occurrences by Hour", color=0x00ff00)
+            embed = discord.Embed(
+                title="Number of Occurrences by Hour", color=0x00ff00)
             embed.set_image(url="attachment://image.png")
             await ctx.followup.send(embed=embed, file=discord.File(fp=image_binary, filename="image.png"))
 
