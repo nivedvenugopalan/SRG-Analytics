@@ -35,7 +35,7 @@ import nltk
 import datetime
 import ast
 
-intents = discord.Intents.all()
+intents = discord.Intents(presences=False, members=True, guilds=True, messages=True)
 
 
 # Initializing the logger
