@@ -241,7 +241,8 @@ class DataManager:
                  ctx_id: int = None, mentions: list = None) -> None:
 
         sql = f"INSERT INTO `{str(guild_id)}` (msg_id, msg_content, author_id, channel_id, epoch, attachments, ctx_id, mentions) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
-        params = [msg_id, msg, author_id, channel_id, epoch, attachments, ctx_id, str(mentions)]
+        params = [msg_id, msg, author_id, channel_id,
+                  epoch, attachments, ctx_id, str(mentions)]
 
         try:
             self.cur.execute(sql, params)
@@ -351,7 +352,8 @@ class DataManager:
         msgs = self.msg_count(guild_id, author_id)
         log.debug(f"Message Count: {msgs}")
 
-        most_mentioned_channels = self._most_mentioned_channels(guild_id, author_id)
+        most_mentioned_channels = self._most_mentioned_channels(
+            guild_id, author_id)
 
         mmp = self._most_mentioned_person(guild_id, author_id)
         tmmp = self._total_times_mentioned_and_by_who(guild_id, author_id)
@@ -434,6 +436,15 @@ class DataManager:
         freq = collections.Counter(channels)
         return freq.most_common(1)[0][0]
 
+    def top_n_users(self, guild_id, n: int) -> list([int, int]):
+        self.cur.execute(
+            f"SELECT author_id, COUNT(*) as num_messages FROM `880368659858616321` GROUP BY author_id")
+        data = self.cur.fetchall()
+
+        data.sort(key=lambda x: x[1], reverse=True)
+
+        return data[:n]
+
 
 class RankManager:
     def __init__(self):
@@ -457,5 +468,6 @@ _error_template = discord.Embed(
 _error_template.set_footer(text=embed_footer)
 _embed_template.set_footer(text=embed_footer)
 
-embed_template = lambda: _embed_template.copy()
-error_template = lambda: _error_template.copy()
+
+def embed_template(): return _embed_template.copy()
+def error_template(): return _error_template.copy()
