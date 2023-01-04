@@ -408,7 +408,7 @@ class DataManager:
 
         return list(freq.most_common(1)[0])[0]
 
-    def find_active_time(time_list):
+    def find_active_time(self, time_list):
         # time in tuple format
         hours = [t[0] for t in time_list]
         freq = collections.Counter(hours)
