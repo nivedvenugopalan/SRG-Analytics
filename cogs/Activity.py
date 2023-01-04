@@ -14,18 +14,18 @@ class Activity(commands.Cog):
 
     activity = discord.SlashCommandGroup("activity", "Activity commands")
 
-    monthly_activity = activity.create_subgroup(
-        "monthly", "Monthly activity commands")
-    hourly_activity = activity.create_subgroup(
-        "daily", "Daily activity commands")
+    user_activity = activity.create_subgroup(
+        "user", "Monthly activity commands")
+    server_activity = activity.create_subgroup(
+        "server", "Daily activity commands")
 
     @commands.Cog.listener()
     async def on_ready(self):
         log.info("Cog: Activity.py Loaded")
         plt.style.use("cyberpunk")
 
-    @hourly_activity.command(
-        name="member",
+    @user_activity.command(
+        name="hourly",
         description="Shows the activity of a user in a guild on a per hour basis."
     )
     async def member_hourly_activeness(
@@ -42,7 +42,7 @@ class Activity(commands.Cog):
         epochs = []
 
         users = [x for x in [user_1, user_2, user_3,
-                             user_4, user_5] if not x is None]
+                             user_4, user_5] if x is not None]
         for user in users:
             manager.cur.execute(
                 f"SELECT epoch FROM `{ctx.guild.id}` WHERE `author_id` = ?", (user.id,))
@@ -83,13 +83,13 @@ class Activity(commands.Cog):
                 first_msg_time = datetime.datetime.fromtimestamp(
                     epochs[i][0][0])
                 current_time = datetime.datetime.now()
-                interval_days = (current_time-first_msg_time).days
+                interval_days = (current_time - first_msg_time).days
 
                 if interval_days == 0:
                     interval_days = 1
 
                 data[i] = (
-                    data[i][0], [x/interval_days for x in list(data[i][1])])
+                    data[i][0], [x / interval_days for x in list(data[i][1])])
 
         sublist_names = [f"{user.display_name}" for user in [
             user_1, user_2, user_3, user_4, user_5] if user is not None]
@@ -136,8 +136,8 @@ class Activity(commands.Cog):
         # close the figure
         plt.close(fig)
 
-    @monthly_activity.command(
-        name="member",
+    @user_activity.command(
+        name="monthly",
         description="Shows the activity of a user in a guild on a monthly basis."
     )
     async def member_monthly_activeness(
@@ -154,7 +154,7 @@ class Activity(commands.Cog):
         epochs = []
 
         users = [x for x in [user_1, user_2, user_3,
-                             user_4, user_5] if not x is None]
+                             user_4, user_5] if x is not None]
         for user in users:
             manager.cur.execute(
                 f"SELECT epoch FROM `{ctx.guild.id}` WHERE `author_id` = ?", (user.id,))
@@ -196,13 +196,13 @@ class Activity(commands.Cog):
                     epochs[i][0][0])
                 current_time = datetime.datetime.now()
                 interval_months = (
-                    current_time-first_msg_time).days / 30.436875
+                                          current_time - first_msg_time).days / 30.436875
 
                 if interval_days == 0:
                     interval_days = 1
 
                 data[i] = (
-                    data[i][0], [x/interval_months for x in list(data[i][1])])
+                    data[i][0], [x / interval_months for x in list(data[i][1])])
 
         sublist_names = [f"{user.display_name}" for user in [
             user_1, user_2, user_3, user_4, user_5] if user is not None]
@@ -250,15 +250,8 @@ class Activity(commands.Cog):
         # close the figure
         plt.close(fig)
 
-    @hourly_activity.command(
-        name="server",
-        description="Shows the activity of a server on a hourly basis."
-    )
-    async def server_hourly_activeness(self, ctx):
-        pass  # TODO
-
-    @monthly_activity.command(
-        name="server",
+    @server_activity.command(
+        name="monthly",
         description="Shows the activity of a guild on a per month basis."
     )
     async def server_monthly_activeness(self, ctx):
@@ -275,8 +268,6 @@ class Activity(commands.Cog):
         fig, axs = plt.subplots(1, 1)
 
         epochs = [list(epoch)[0] for epoch in epochs if epoch != []]
-        epochs = [sorted(epoch_list, key=lambda x: x[0])
-                  for epoch_list in epochs]
 
         # iterate over the list of epochs
         month_counts = {i: 0 for i in range(1, 13)}
@@ -330,8 +321,8 @@ class Activity(commands.Cog):
         # close the figure
         plt.close(fig)
 
-    @hourly_activity.command(
-        name="server",
+    @server_activity.command(
+        name="hourly",
         description="Shows the activity of a guild on a per hour basis."
     )
     async def server_hourly_activeness(self, ctx):
