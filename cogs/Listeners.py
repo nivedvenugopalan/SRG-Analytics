@@ -28,9 +28,18 @@ class Listeners(commands.Cog):
         if ctx.author.bot:
             return
 
-        # self.manager.add_data(ctx.guild.id, ctx.id, ctx.content, ctx.author.id,
-        #                       ctx.reference.message_id if ctx.reference else None,
-        #                       [mention.id for mention in ctx.mentions] if ctx.mentions != [] else None)
+        # check if guild is paused
+        if self.manager.is_paused(ctx.guild.id):
+            return
+
+        # check ignores
+        if self.manager.is_ignored(ctx.channel.id):
+            return
+        elif self.manager.is_ignored(ctx.author.id):
+            return
+        for role in ctx.author.roles:
+            if self.manager.is_ignored(role.id):
+                return
 
         self.manager.add_data(
             guild_id=ctx.guild.id,
@@ -42,13 +51,23 @@ class Listeners(commands.Cog):
             attachments=len(ctx.attachments),
             ctx_id=ctx.channel_mentions[1].id if ctx.channel_mentions else None,
             mentions=[mention.id for mention in ctx.mentions]
-                         if ctx.mentions != [] else None
+            if ctx.mentions != [] else None
         )
 
-        c = self.manager.msg_count(ctx.guild.id, ctx.author.id)
-        log.debug(f"User Messages after commit: {c}, Time: ")
-
+        try:
+            self.manager.msg_count(ctx.guild.id, ctx.author.id)
+        # except if the unique constraint is violated
+        except Exception as err:
+            log.error(err)
+            return
         log.debug(f"Added message {ctx.id} to database.")
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, ctx: discord.Message):
+        self.manager.cur.execute("DELETE FROM messages WHERE msg_id = ?", (ctx.id,))
+        self.manager.con.commit()
+
+        log.debug(f"Deleted message {ctx.id} from database.")
 
 
 def setup(client):
