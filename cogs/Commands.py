@@ -18,66 +18,6 @@ class Commands(commands.Cog):
     async def on_ready(self):
         log.info("Cog: Commands.py Loaded")
 
-    @commands.slash_command(name="harvest", description="Harvests data from a guild.")
-    async def harvest(self, ctx):
-        await ctx.defer()
-        self.manager = DataManager()
-
-        guild = ctx.guild
-        data_list = {}
-        start_time = time.time()
-
-        cmd_channel = self.client.get_channel(ctx.channel.id)
-
-        async def harvest_channel(channel):
-            # Iterate through all messages in the channel
-            async for message in channel.history(limit=None):
-                if message.author.bot:
-                    continue
-
-                data_list[channel.name].append([
-                    message.id, message.content, message.author.id, message.channel.id,
-                    int(message.created_at.timestamp()) +
-                    3 * 60 * 60, len(message.attachments),
-                    message.reference.message_id if message.reference
-                    else None, str([mention.id for mention in message.mentions]) if message.mentions != [] else None
-                ])
-                self.count += 1
-                if self.count % 1000 == 0:
-                    print(self.count)
-
-        # Iterate through all channels in the guild
-        for channel in guild.channels:
-
-            # check if channel is a text channel
-            if not isinstance(channel, discord.TextChannel):
-                if isinstance(channel, discord.ForumChannel):
-                    for thread in channel.threads:
-                        data_list[thread.name] = []
-                        await harvest_channel(thread)
-
-            else:
-                continue
-
-            # Iterate through all messages in the channel
-            data_list[channel.name] = []
-            log.info(f"Harvesting channel {channel.name}...")
-            try:
-                await cmd_channel.send(f"Harvesting channel {channel.name}...")
-            except Exception as err:
-                log.error(err)
-
-            await harvest_channel(channel)
-
-        # Add the data to the database
-        for channel in data_list:
-            print(channel)
-            self.manager.add_bulk_data(guild.id, data_list[channel])
-
-        await ctx.followup.send("Harvested data from the guild.")
-        log.info(
-            f"Harvested data from guild {guild.id} in {time.time() - start_time} seconds.")
-
     @commands.slash_command(name="profile", description="Shows your profile.")
     async def profile(self, ctx, user: discord.Member = None):
         await ctx.defer()
