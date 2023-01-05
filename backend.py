@@ -35,7 +35,7 @@ import nltk
 import datetime
 import ast
 
-intents = discord.Intents(presences=False, members=True, guilds=True, messages=True)
+intents = intents = discord.Intents.all()
 
 
 # Initializing the logger
@@ -224,7 +224,7 @@ class DataManager:
 
     def is_paused(self, guild_id):
         self.cur.execute("SELECT paused FROM guilds WHERE id = %s", (guild_id,))
-        return self.cur.fetchone()
+        return True if self.cur.fetchone()[0] == 1 else False
 
     def add_guild(self, guild_id: int) -> None:
 

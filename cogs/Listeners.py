@@ -32,16 +32,16 @@ class Listeners(commands.Cog):
 
         # check if guild is paused
         if self.manager.is_paused(ctx.guild.id):
-            return
+            return log.debug("Guild is paused")
 
         # check ignores
         if self.manager.is_ignored(ctx.channel.id):
-            return
+            return log.debug("Channel is ignored")
         elif self.manager.is_ignored(ctx.author.id):
-            return
+            return log.debug("User is ignored")
         for role in ctx.author.roles:
             if self.manager.is_ignored(role.id):
-                return
+                return log.debug("Role is ignored")
 
         self.manager.add_data(
             guild_id=ctx.guild.id,
@@ -66,7 +66,7 @@ class Listeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_delete(self, ctx: discord.Message):
-        self.manager.cur.execute("DELETE FROM messages WHERE msg_id = ?", (ctx.id,))
+        self.manager.cur.execute(f"DELETE FROM `{ctx.guild.id}` WHERE msg_id = ?", (ctx.id,))
         self.manager.con.commit()
 
         log.debug(f"Deleted message {ctx.id} from database.")

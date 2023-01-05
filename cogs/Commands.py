@@ -71,19 +71,31 @@ class Commands(commands.Cog):
 
         data = manager.top_n_users(ctx.guild.id, n=n)
 
-        Y = np.array([x[1] for x in data])
-        LABELS = []
+        y = np.array([x[1] for x in data])
+        labels = []
         for x in data:
             try:
-                user = await ctx.bot.fetch_user(x[0])
-                LABELS.append(user.display_name)
-            except:
-                LABELS.append("Deleted User")
+                user = await self.client.fetch_user(x[0])
+                labels.append(user.display_name or user.name)
+            except Exception as e:
+                log.debug(e)
+                labels.append("Deleted User")
 
-        plt.pie(Y, labels=LABELS)
+        plt.pie(y, labels=labels)
         plt.legend()
+        # mplcyberpunk.add_glow_effects()
 
         # TODO: add things
+        with io.BytesIO() as image_binary:
+            plt.savefig(image_binary, format='png')
+            image_binary.seek(0)
+
+            embed = embed_template()
+            embed.title = "Top Users"
+            embed.description = f"Shows the top {n} users in the server."
+            embed.set_image(url="attachment://image.png")
+
+            await ctx.followup.send(embed=embed, file=discord.File(fp=image_binary, filename="image.png"))
 
     @commands.slash_command(name="topchannel", description="Shows the help menu.")
     async def topchannel(self, ctx):

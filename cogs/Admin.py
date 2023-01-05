@@ -110,6 +110,15 @@ class Admin(commands.Cog):
                 if message.author.bot:
                     continue
 
+                if manager.is_ignored(ctx.channel.id):
+                    return
+                elif manager.is_ignored(ctx.author.id):
+                    return
+                # for role in ctx.author.roles:
+                #     if self.manager.is_ignored(role.id):
+                #         return
+                # disabled cause will slow down the bot
+
                 data_list[channel.name].append([
                     message.id, message.content, message.author.id, message.channel.id,
                     int(message.created_at.timestamp()) +
@@ -123,12 +132,6 @@ class Admin(commands.Cog):
 
             # check if channel is a text channel
             if not isinstance(channel, discord.TextChannel):
-                if isinstance(channel, discord.ForumChannel):
-                    for thread in channel.threads:
-                        data_list[thread.name] = []
-                        await harvest_channel(thread)
-
-            else:
                 continue
 
             # Iterate through all messages in the channel
