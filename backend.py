@@ -215,15 +215,15 @@ class DataManager:
             log.critical(f"Failed to connect to database. {e}")
 
     def pause(self, guild_id):
-        self.cur.execute("UPDATE guilds SET paused = 1 WHERE guild_id = %s", (guild_id,))
+        self.cur.execute("UPDATE guilds SET paused = 1 WHERE id = %s", (guild_id,))
         self.con.commit()
 
     def resume(self, guild_id):
-        self.cur.execute("UPDATE guilds SET paused = 0 WHERE guild_id = %s", (guild_id,))
+        self.cur.execute("UPDATE guilds SET paused = 0 WHERE id = %s", (guild_id,))
         self.con.commit()
 
     def is_paused(self, guild_id):
-        self.cur.execute("SELECT paused FROM guilds WHERE guild_id = %s", (guild_id,))
+        self.cur.execute("SELECT paused FROM guilds WHERE id = %s", (guild_id,))
         return self.cur.fetchone()
 
     def add_guild(self, guild_id: int) -> None:

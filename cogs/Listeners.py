@@ -28,6 +28,8 @@ class Listeners(commands.Cog):
         if ctx.author.bot:
             return
 
+        log.debug(type(ctx.channel))
+
         # check if guild is paused
         if self.manager.is_paused(ctx.guild.id):
             return

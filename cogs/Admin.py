@@ -22,16 +22,20 @@ class Admin(commands.Cog):
 
     @ignore.command(name="channel")
     @commands.has_permissions(administrator=True)
-    async def ignore_channel(self, ctx, channel: discord.TextChannel):
+    async def ignore_channel(self, ctx, channel: discord.TextChannel | discord.threads.Thread = None):
         """Ignore a channel from the bot"""
         manager = DataManager()
+
+        if channel is None:
+            channel = ctx.channel
 
         # check if the channel is already ignored
         if manager.is_ignored(channel.id):
             await ctx.respond(embed=error_template("The given channel is already ignored"))
             return
         # check the type of the channel
-        if channel.type != discord.ChannelType.text or channel.type != discord.ChannelType.forum:
+        log.debug(f"Channel type: {type(channel)}")
+        if type(channel) != discord.ChannelType.text or type(channel) != discord.threads.Thread:
             await ctx.respond(embed=error_template("The given channel is not a text channel"))
             return
 
@@ -44,10 +48,13 @@ class Admin(commands.Cog):
 
     @unignore.command()
     @commands.has_permissions(administrator=True)
-    async def unignore_channel(self, ctx, channel: discord.TextChannel):
+    async def unignore_channel(self, ctx, channel: discord.TextChannel | discord.threads.Thread = None):
         """Unignore a channel from the bot"""
 
         manager = DataManager()
+
+        if channel is None:
+            channel = ctx.channel
 
         # check if the channel is already ignored
         if not manager.is_ignored(channel.id):
