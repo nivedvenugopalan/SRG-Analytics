@@ -214,12 +214,23 @@ class DataManager:
         except Exception as e:
             log.critical(f"Failed to connect to database. {e}")
 
+    def pause(self, guild_id):
+        self.cur.execute("UPDATE guilds SET paused = 1 WHERE guild_id = %s", (guild_id,))
+        self.con.commit()
+
+    def resume(self, guild_id):
+        self.cur.execute("UPDATE guilds SET paused = 0 WHERE guild_id = %s", (guild_id,))
+        self.con.commit()
+
+    def is_paused(self, guild_id):
+        self.cur.execute("SELECT paused FROM guilds WHERE guild_id = %s", (guild_id,))
+        return self.cur.fetchone()
+
     def add_guild(self, guild_id: int) -> None:
 
         self.cur.execute(
             f"""
                 CREATE TABLE IF NOT EXISTS %s (
-                id INT NOT NULL AUTO_INCREMENT,
                 msg_id BIGINT NOT NULL,
                 msg_content TEXT,
                 author_id BIGINT NOT NULL,
@@ -228,13 +239,20 @@ class DataManager:
                 attachments SMALLINT ,
                 ctx_id BIGINT,
                 mentions TEXT,
-                PRIMARY KEY (id)
+                PRIMARY KEY (msg_id)
                 );
             """, (str(guild_id),)
         )
+        self.cur.execute("INSERT INTO guilds (guild_id) VALUES (%s)", (guild_id,))
         self.con.commit()
 
         log.info(f"Created table for guild {guild_id}")
+
+    def purge_guild(self, guild_id: int) -> None:
+        # clear the table
+        self.cur.execute(f"TRUNCATE TABLE `{guild_id}`;")
+        self.con.commit()
+        log.info(f"Purged table for guild {guild_id}")
 
     def add_data(self, guild_id: int, msg_id: int, epoch: int, msg: str, author_id: int, channel_id,
                  attachments: int = 0,
@@ -282,6 +300,22 @@ class DataManager:
         log.debug(rtn)
 
         return rtn
+
+    def set_ignores(self, id_, type_, guild_id):
+        self.cur.execute(
+            f"INSERT INTO `ignores` (id, type, guild_id) VALUES(?, ?, ?);", (id_, type_, guild_id))
+        self.con.commit()
+
+    def remove_ignores(self, id_):
+        self.cur.execute(
+            f"DELETE FROM `ignores` WHERE id=?;", (id_,))
+        self.con.commit()
+
+    def is_ignored(self, id_: int) -> bool:
+        self.cur.execute(
+            f"SELECT * FROM `ignores` WHERE id=?;", (id_,))
+
+        return self.cur.fetchone() is not None
 
     def _net_polarity(self, guild_id: int, author_id: int, msg_cache=None):
         messages = self._get_all_messages(
@@ -436,7 +470,7 @@ class DataManager:
         freq = collections.Counter(channels)
         return freq.most_common(1)[0][0]
 
-    def top_n_users(self, guild_id, n: int) -> list([int, int]):
+    def top_n_users(self, guild_id, n: int) -> list[[int, int]]:
         self.cur.execute(
             f"SELECT author_id, COUNT(*) as num_messages FROM `880368659858616321` GROUP BY author_id")
         data = self.cur.fetchall()
@@ -470,4 +504,9 @@ _embed_template.set_footer(text=embed_footer)
 
 
 def embed_template(): return _embed_template.copy()
-def error_template(): return _error_template.copy()
+
+
+def error_template(description: str):
+    _error_template_ = _error_template.copy()
+    _error_template_.description = description
+    return _error_template_
