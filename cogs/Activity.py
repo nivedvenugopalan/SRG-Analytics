@@ -1,3 +1,5 @@
+import time
+
 import discord
 from discord.ext import commands
 import pytz
@@ -327,6 +329,78 @@ class Activity(commands.Cog):
     )
     async def server_hourly_activeness(self, ctx):
         pass  # TODO
+
+    @server_activity.command(
+        name="today",
+        description="Shows the activity of a guild today."
+    )
+    async def server_today_activeness(self, ctx):
+        await ctx.defer()
+        manager = DataManager()
+        epochs = []
+
+        # SELECT EPOCH OF TODAY
+        manager.cur.execute(f"SELECT epoch FROM `{ctx.guild.id}` WHERE epoch > {int(time.time()) - 86400}")
+        epochs.append(list(manager.cur.fetchall()))
+        epochs = epochs[0]
+
+        tz = pytz.timezone('Asia/Riyadh')
+
+        fig, axs = plt.subplots(1, 1)
+
+        epochs = [list(epoch)[0] for epoch in epochs if epoch != []]
+
+        # iterate over the list of epochs
+        hour_counts = {i: 0 for i in range(0, 24)}
+        # iterate over the epochs in each sublist
+        for epoch in epochs:
+            # convert the epoch to a datetime object
+            dt = datetime.datetime.fromtimestamp(epoch, tz=tz)
+            # extract the month from the datetime object
+            hour = dt.hour
+            # increment the count for this month in the dictionary
+            if hour in hour_counts:
+                hour_counts[hour] += 1
+            else:
+                hour_counts[hour] = 1
+        # extract the months and counts as separate lists
+        counts = list(hour_counts.values())
+
+        t = [i for i in range(len(counts))]
+
+        # plot the data
+        axs.plot(t, counts, '-o')
+
+        ticks = [i for i in range(24)]
+        tick_labels = [i for i in range(24)]
+
+        # set the tick locations and labels
+        axs.set_xticks(ticks)
+        axs.set_xticklabels(tick_labels)
+
+        # add labels and grid
+        axs.set_xlabel('Hour')
+        axs.set_ylabel('Number of Messages')
+        axs.grid(True)
+
+        axs.set_title("Today's Server Activity")
+        fig.tight_layout()
+
+        mplcyberpunk.add_glow_effects()
+
+        # save the graph as a virtual file and send it
+        with io.BytesIO() as image_binary:
+            fig.savefig(image_binary, format='png')
+            image_binary.seek(0)
+            embed = embed_template()
+            embed.title = "Today's Server Activity"
+            embed.description = "Shows the activity of a guild today."
+            embed.set_image(url="attachment://image.png")
+            await ctx.followup.send(embed=embed, file=discord.File(fp=image_binary, filename="image.png"))
+
+        # close the figure
+        plt.close(fig)
+
 
 
 def setup(client):
