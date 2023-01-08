@@ -32,11 +32,11 @@ class Activity(commands.Cog):
     )
     async def member_hourly_activeness(
             self, ctx,
-            user_1: discord.User,
-            user_2: discord.User = None,
-            user_3: discord.User = None,
-            user_4: discord.User = None,
-            user_5: discord.User = None,
+            user_1: discord.Member,
+            user_2: discord.Member = None,
+            user_3: discord.Member = None,
+            user_4: discord.Member = None,
+            user_5: discord.Member = None,
             average: bool = False
     ):
         await ctx.defer()
@@ -144,11 +144,11 @@ class Activity(commands.Cog):
     )
     async def member_monthly_activeness(
             self, ctx,
-            user_1: discord.User,
-            user_2: discord.User = None,
-            user_3: discord.User = None,
-            user_4: discord.User = None,
-            user_5: discord.User = None,
+            user_1: discord.Member,
+            user_2: discord.Member = None,
+            user_3: discord.Member = None,
+            user_4: discord.Member = None,
+            user_5: discord.Member = None,
             average: bool = False
     ):
         await ctx.defer()

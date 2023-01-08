@@ -88,7 +88,7 @@ class Commands(commands.Cog):
 
         with io.BytesIO() as image_binary:
             plt.savefig(image_binary, format='png')
-            image_binary.seek(0) 
+            image_binary.seek(0)
 
             embed = embed_template()
             embed.title = "Top Users"
