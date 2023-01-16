@@ -35,7 +35,7 @@ import nltk
 import datetime
 import ast
 
-intents = intents = discord.Intents.all()
+intents = discord.Intents.all()
 
 
 # Initializing the logger
@@ -215,15 +215,18 @@ class DataManager:
             log.critical(f"Failed to connect to database. {e}")
 
     def pause(self, guild_id):
-        self.cur.execute("UPDATE guilds SET paused = 1 WHERE id = %s", (guild_id,))
+        self.cur.execute(
+            "UPDATE guilds SET paused = 1 WHERE id = %s", (guild_id,))
         self.con.commit()
 
     def resume(self, guild_id):
-        self.cur.execute("UPDATE guilds SET paused = 0 WHERE id = %s", (guild_id,))
+        self.cur.execute(
+            "UPDATE guilds SET paused = 0 WHERE id = %s", (guild_id,))
         self.con.commit()
 
     def is_paused(self, guild_id):
-        self.cur.execute("SELECT paused FROM guilds WHERE id = %s", (guild_id,))
+        self.cur.execute(
+            "SELECT paused FROM guilds WHERE id = %s", (guild_id,))
         return True if self.cur.fetchone()[0] == 1 else False
 
     def add_guild(self, guild_id: int) -> None:
@@ -243,7 +246,8 @@ class DataManager:
                 );
             """, (str(guild_id),)
         )
-        self.cur.execute("INSERT INTO guilds (guild_id) VALUES (%s)", (guild_id,))
+        self.cur.execute(
+            "INSERT INTO guilds (guild_id) VALUES (%s)", (guild_id,))
         self.con.commit()
 
         log.info(f"Created table for guild {guild_id}")
@@ -276,6 +280,16 @@ class DataManager:
             data)
 
         self.con.commit()
+
+    def _get_all_messages_from_guild(self, guild_id: int) -> list[str]:
+        self.cur.execute(
+            f"SELECT author_id, msg_content FROM `{str(guild_id)}`")
+        messages = self.cur.fetchall()
+
+        rtn = [(msg[0], str(msg[1].decode())) for msg in messages]
+
+        log.debug(rtn[:10])
+        return rtn
 
     def _get_all_messages(self, guild_id: int, author_id: int) -> list[str]:
         self.cur.execute(
@@ -470,14 +484,31 @@ class DataManager:
         freq = collections.Counter(channels)
         return freq.most_common(1)[0][0]
 
-    def top_n_users(self, guild_id, n: int) -> list[[int, int]]:
-        self.cur.execute(
-            f"SELECT author_id, COUNT(*) as num_messages FROM `880368659858616321` GROUP BY author_id")
-        data = self.cur.fetchall()
+    def top_n_users(self, guild_id, n: int, words: bool):
+        if not words:
+            self.cur.execute(
+                f"SELECT author_id, COUNT(*) as num_messages FROM `{str(guild_id)}` GROUP BY author_id")
+            data = self.cur.fetchall()
 
-        data.sort(key=lambda x: x[1], reverse=True)
+            data.sort(key=lambda x: x[1], reverse=True)
 
-        return data[:n]
+            return data[:n]
+        else:
+            messages = self._get_all_messages_from_guild(guild_id)
+
+            def count_words_by_user(arr):
+                counts = {}
+                for user, message in arr:
+                    words = message.split()
+                    if user in counts:
+                        counts[user] += len(words)
+                    else:
+                        counts[user] = len(words)
+                return [(user, count) for user, count in counts.items()]
+
+            msgs = count_words_by_user(messages)
+            msgs.sort(key=lambda x: x[1], reverse=True)
+            return msgs[:n]
 
 
 class RankManager:

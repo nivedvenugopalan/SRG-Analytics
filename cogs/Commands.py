@@ -60,8 +60,8 @@ class Commands(commands.Cog):
 
         await ctx.followup.send(embed=embed)
 
-    @commands.slash_command(name="topten", description="Shows the top `n` users in the guild. 10 by default.")
-    async def topten(self, ctx, n: int = 10):
+    @commands.slash_command(name="topten", description="Shows the top `n` users in the guild. 10 by default.", )
+    async def topten(self, ctx, words: bool = False, n: int = 10):
         await ctx.defer()
         manager = DataManager()
 
@@ -69,9 +69,10 @@ class Commands(commands.Cog):
             await ctx.followup.send("This command can only be used in a server.")
             return
 
-        data = manager.top_n_users(ctx.guild.id, n=n)
+        data = manager.top_n_users(ctx.guild.id, n=n, words=words)
 
         y = np.array([x[1] for x in data])
+
         labels = []
 
         for x in data:
