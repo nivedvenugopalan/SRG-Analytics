@@ -484,8 +484,8 @@ class DataManager:
         freq = collections.Counter(channels)
         return freq.most_common(1)[0][0]
 
-    def top_n_users(self, guild_id, n: int, words: bool):
-        if not words:
+    def top_n_users(self, guild_id, n: int, type_: str):
+        if type_ == "messages":
             self.cur.execute(
                 f"SELECT author_id, COUNT(*) as num_messages FROM `{str(guild_id)}` GROUP BY author_id")
             data = self.cur.fetchall()
@@ -493,7 +493,7 @@ class DataManager:
             data.sort(key=lambda x: x[1], reverse=True)
 
             return data[:n]
-        else:
+        elif type_ == "words":
             messages = self._get_all_messages_from_guild(guild_id)
 
             def count_words_by_user(arr):
@@ -509,6 +509,8 @@ class DataManager:
             msgs = count_words_by_user(messages)
             msgs.sort(key=lambda x: x[1], reverse=True)
             return msgs[:n]
+        elif type_ == "characters":
+            pass # TODO
 
 
 class RankManager:
