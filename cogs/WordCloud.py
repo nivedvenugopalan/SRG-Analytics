@@ -19,9 +19,11 @@ class WordCloud(commands.Cog):
         log.info("Cog: WordCloud.py Loaded")
         plt.style.use("cyberpunk")
 
-    @wordcloud.command()
-    async def wordcloud_user(self, ctx):
-        messages = [("hello", 10), ("world", 15), ("goodbye", 5)]
+    @wordcloud.command(name="user")
+    async def wordcloud_user(self, ctx, user: discord.Member):
+        await ctx.defer()
+        manager = DataManager()
+        messages = manager.most_used_words(ctx.guild.id, user.id, 100)
         word_to_count = dict(messages)
 
         wordcloud = wc().generate_from_frequencies(word_to_count)
