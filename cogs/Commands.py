@@ -69,7 +69,7 @@ class Commands(commands.Cog):
             await ctx.followup.send("This command can only be used in a server.")
             return
 
-        data = manager.top_n_users(ctx.guild.id, n=n, words=type_)
+        data = manager.top_n_users(ctx.guild.id, n=n, type_=type_)
 
         y = np.array([x[1] for x in data])
 

@@ -3,7 +3,7 @@ from datetime import datetime
 from discord.ext import commands
 from backend import embed_template
 
-from mat import sentiment_analysis, entity_recognition, pos_tagging, language, grammar_police
+from mat import sentiment_analysis, entity_recognition, pos_tagging, language
 
 
 class AnalyseMessage(commands.Cog):
@@ -11,7 +11,7 @@ class AnalyseMessage(commands.Cog):
         self.bot = bot
 
     @commands.message_command()
-    async def analyse(self, ctx, message: discord.Message):
+    async def Analyse(self, ctx, message: discord.Message):
 
         # make an embed
         embed = embed_template()
@@ -27,12 +27,10 @@ class AnalyseMessage(commands.Cog):
             name="Content", value=f"`{message.content}`", inline=False)
         embed.add_field(
             name="Timestamp", value=f"`{message.created_at.strftime('%Y-%m-%d %H:%M:%S')}`")
-        polarity, subjectivity = sentiment_analysis(message.content)
 
+        # sentiment
         embed.add_field(
-            name="Polarity", value=f"`{polarity}`", inline=False)
-        embed.add_field(
-            name="Subjectivity", value=f"`{subjectivity}`", inline=False)
+            name="Sentiment", value=f"`{sentiment_analysis.analyze_sentiment(message.content)}`", inline=False)
 
         embed.add_field(
             name="Entities", value=", ".join(
@@ -43,23 +41,16 @@ class AnalyseMessage(commands.Cog):
 
         embed.add_field(
             name="Language", value=f"`{language.detect_language(message.content)}`", inline=False)
+
         # if language not en, translate it
         if language.detect_language(message.content) != "en":
             embed.add_field(
                 name="Translated", value=f"`{language.translate(message.content)}`", inline=False)
 
-        # grammar
-        embed.add_field(
-            name="Grammar", value=", ".join(
-                [f"```{g}```" for g in grammar_police.get_grammar(
-                    message.content)]
-            )
-        )
+        # image = pos_tagging.get_pos_tagged_img(message.content)
+        # embed.set_image(url="attachment://image.png")
 
-        image = pos_tagging.get_pos_tagged_img(message.content)
-        embed.set_image(url="attachment://image.png")
-
-        await ctx.reply(embed=embed, file=discord.File(image, filename="image.png"))
+        await ctx.respond(embed=embed)
 
 
 # The `setup` function is required for the cog to work

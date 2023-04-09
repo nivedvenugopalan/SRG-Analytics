@@ -1,6 +1,6 @@
 from mat.mat import nlp
 
 
-def analyze_sentiment(text: str) -> tuple[float]:
+def analyze_sentiment(text: str) -> float:
     doc = nlp(text)
-    return (doc.sentiment.polarity, doc.sentiment.subjectivity)
+    return (doc.sentiment)

@@ -6,7 +6,7 @@ def detect_language(text: str) -> str:
     return detect(text)
 
 
-translator = Translator()
+translator = Translator(to_lang='en')
 
 
 def translate(text: str) -> str:
