@@ -131,8 +131,6 @@ dmypy.json
 # PyCharm cache files
 .idea/
 
-
-data
 config.ini
 
 *.ipynb

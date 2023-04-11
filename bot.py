@@ -1,48 +1,52 @@
-#   _____  _                       _   ____        _     _______                   _       _
-#  |  __ \(_)                     | | |  _ \      | |   |__   __|                 | |     | |
-#  | |  | |_ ___  ___ ___  _ __ __| | | |_) | ___ | |_     | | ___ _ __ ___  _ __ | | __ _| |_ ___
-#  | |  | | / __|/ __/ _ \| '__/ _` | |  _ < / _ \| __|    | |/ _ \ '_ ` _ \| '_ \| |/ _` | __/ _ \
-#  | |__| | \__ \ (_| (_) | | | (_| | | |_) | (_) | |_     | |  __/ | | | | | |_) | | (_| | ||  __/
-#  |_____/|_|___/\___\___/|_|  \__,_| |____/ \___/ \__|    |_|\___|_| |_| |_| .__/|_|\__,_|\__\___|
-#                                                                           | |
-#                                                                           |_|
-#
-# Welcome to Raj's Discord Bot Template
-#
-# This template is designed to be a starting point for your own Discord bot.
-# Made by RajDave69 on GitHub.
-#
-#
-# This is the bot.py file. There should be nothing here except for the code that starts the bot.
-# I'd not recommend editing this file, keep it clean and simple. If you want to add more commands, make a new cog.
-#
-#
-
 import os
 import sys
-from backend import client, discord_token, log, presence
-import discord.utils
 
+import discord
+from discord.ext import commands
 
-# This is what gets run when the bot stars
-@client.event
-async def on_ready():
-    print("Connected to Discord!")
-    log.info(f"Bot is ready. Logged in as {client.user}")
-    await client.change_presence(activity=discord.Game(name=presence))
+from logging_ import log
 
-
-# Loading all .py files in ./cogs as bot cogs.
-# If you don't know what a cog is,
-# https://discordpy.readthedocs.io/en/stable/ext/commands/cogs.html
-for file in os.listdir('./cogs'):
-    if file.endswith('.py'):
-        client.load_extension(f'cogs.{file[:-3]}')
-
-
-# Run the actual bot
+import configparser
+config = configparser.ConfigParser()
 try:
-    client.run(discord_token)
+    config.read('./data/config.ini')
+except Exception as e:
+    log.critical(f"Failed to read config.ini. Error: {e}")
+    sys.exit()
+
+log.setLevel(config.get('general', 'log_level').strip().upper())
+
+intents = discord.Intents.all()
+intents.message_content = True
+
+
+class SRGAnalyticsBot(commands.Bot):
+    def __init__(self) -> None:
+        super().__init__(
+            intents=intents,
+            command_prefix=config.get('discord', 'prefix'),
+            application_id=config.get('secret', 'application_id')
+        )
+
+    async def on_ready(self) -> None:
+        await load_cogs()
+
+        # change presence
+        await self.change_presence(activity=discord.Game(name="Made by Nived, Raj & Rayan"))
+
+        # persistant views
+
+
+bot = SRGAnalyticsBot()
+
+
+async def load_cogs():
+    for file in os.listdir('./cogs'):
+        if file.endswith('.py'):
+            await bot.load_extension(f'cogs.{file[:-3]}')
+
+try:
+    bot.run(config.get('discord', 'discord_token'))
 except discord.LoginFailure:
     log.critical("Invalid Discord Token. Please check your config file.")
     sys.exit()
