@@ -194,6 +194,13 @@ class Admin(commands.Cog):
         await ctx.respond(embed=embed)
 
 
+    # error handling
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        if error == discord.ext.commands.errors.MissingPermissions:
+            await ctx.respond(embed=error_template("You do not have permission to use this command"))
+
+
 
 def setup(client):
     client.add_cog(Admin(client))
