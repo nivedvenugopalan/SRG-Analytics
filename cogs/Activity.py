@@ -339,8 +339,13 @@ class Activity(commands.Cog):
         manager = DataManager()
         epochs = []
 
+        # get epoch of today 12:00 AM
+        today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = today.timestamp()
+        print(today)
+
         # SELECT EPOCH OF TODAY
-        manager.cur.execute(f"SELECT epoch FROM `{ctx.guild.id}` WHERE epoch > {int(time.time()) - 86400}")
+        manager.cur.execute(f"SELECT epoch FROM `{ctx.guild.id}` WHERE epoch > {int(today)}", )
         epochs.append(list(manager.cur.fetchall()))
         epochs = epochs[0]
 
