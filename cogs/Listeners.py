@@ -1,6 +1,3 @@
-import datetime
-import time
-
 import discord
 import pytz
 from discord.ext import commands
@@ -20,6 +17,7 @@ class Listeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
+        log.info(f"Joined guild {guild.name}")
         self.manager.add_guild(guild.id)
 
     @commands.Cog.listener()
@@ -51,7 +49,7 @@ class Listeners(commands.Cog):
             author_id=ctx.author.id,
             channel_id=ctx.channel.id,
             attachments=len(ctx.attachments),
-            ctx_id=ctx.channel_mentions[1].id if ctx.channel_mentions else None,
+            ctx_id=ctx.channel_mentions[0].id if ctx.channel_mentions else None,
             mentions=[mention.id for mention in ctx.mentions]
             if ctx.mentions != [] else None
         )
