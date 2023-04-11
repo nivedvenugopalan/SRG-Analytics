@@ -227,15 +227,18 @@ class DataManager:
     def is_paused(self, guild_id):
         self.cur.execute(
             "SELECT paused FROM guilds WHERE id = %s", (guild_id,))
-        return True if self.cur.fetchone()[0] == 1 else False
+        try:
+            return False if self.cur.fetchone()[0] != 1 else True
+        except:
+            return False
 
     def add_guild(self, guild_id: int) -> None:
 
         self.cur.execute(
             f"""
-                CREATE TABLE IF NOT EXISTS %s (
+                CREATE TABLE IF NOT EXISTS `{guild_id}` (
                 msg_id BIGINT NOT NULL,
-                msg_content TEXT,
+                msg_content BLOB,
                 author_id BIGINT NOT NULL,
                 channel_id BIGINT NOT NULL,
                 epoch BIGINT NOT NULL,
@@ -244,7 +247,7 @@ class DataManager:
                 mentions TEXT,
                 PRIMARY KEY (msg_id)
                 );
-            """, (str(guild_id),)
+            """,
         )
         self.cur.execute(
             "INSERT INTO guilds (guild_id) VALUES (%s)", (guild_id,))
